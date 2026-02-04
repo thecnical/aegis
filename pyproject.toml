@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegis-cli"
+version = "0.1.0"
+description = "Aegis - Modular Offensive Security CLI Framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Chandan Pandey" }
+]
+dependencies = [
+  "click",
+  "rich",
+  "pyyaml",
+  "requests"
+]
+
+
+[project.scripts]
+aegis = "main:cli"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["aegis", "aegis.core", "aegis.tools", "aegis.tools.recon", "aegis.tools.vuln", "aegis.tools.exploit", "aegis.tools.post", "aegis.tools.report", "aegis.templates"]
+
+[tool.setuptools.package-data]
+aegis = ["tools/**/*.manifest.json", "templates/*.md", "templates/*.html"]

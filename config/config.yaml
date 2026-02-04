@@ -1,0 +1,56 @@
+# Global configuration for Aegis
+# Update these values to match your environment.
+
+general:
+  data_path: "data"
+  db_path: "data/aegis.db"
+  default_timeout: 30
+  safe_mode: true
+  http_timeout: 15
+  http_retries: 3
+  http_backoff: 0.3
+  report_template: ""
+  report_template_html: ""
+  brand: "Chandan Pandey"
+  report_custom_sections:
+    - title: "Engagement Notes"
+      body: "Add scope, exclusions, and testing notes here."
+    - title: "Remediation Guidance"
+      body: "Add remediation checklist here."
+  wordlists_path: "data/wordlists"
+  wordlists_repo: "https://github.com/danielmiessler/SecLists.git"
+
+api_keys:
+  shodan: "pMMwG8JZNwvLKEy28rrP3W9hdQi7g8v8"
+  wappalyzer: "CHANGE_ME"
+
+profiles:
+  default:
+    timeout: 30
+    nmap_args: "-sC -sV"
+    nuclei_rate: 150
+    ferox_depth: 2
+  fast:
+    timeout: 10
+    nmap_args: "-sS"
+    nuclei_rate: 300
+    ferox_depth: 1
+  deep:
+    timeout: 90
+    nmap_args: "-sC -sV -A"
+    nuclei_rate: 50
+    ferox_depth: 4
+
+external_tools:
+  nmap: "nmap"
+  subfinder: "subfinder"
+  shodan: "shodan"
+  nuclei: "nuclei"
+  feroxbuster: "feroxbuster"
+  sqlmap: "sqlmap"
+  hydra: "hydra"
+  netcat: "nc"
+  smbclient: "smbclient"
+  wappalyzer: "wappalyzer"
+  linpeas: "linpeas.sh"
+  winpeas: "winpeas.exe"

@@ -1,0 +1,23 @@
+name: Feature request
+about: Suggest an improvement
+labels: ["enhancement"]
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: Describe the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case
+      placeholder: Why do you need this?
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context

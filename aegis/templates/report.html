@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>${title}</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { font-family: "Courier New", monospace; background: #0b0f0e; color: #e2f5e9; margin: 0; padding: 24px; }
+      h1, h2 { color: #35ff9e; }
+      .panel { border: 1px solid #1d3b2d; padding: 16px; margin-bottom: 18px; background: #0f1513; }
+      .meta { color: #9acbb4; font-size: 0.9rem; }
+      a { color: #7ef7c3; }
+      ul { padding-left: 20px; }
+      li { margin-bottom: 6px; }
+      .badge { display: inline-block; padding: 2px 8px; border: 1px solid #2d5a44; margin-right: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <h1>${title}</h1>
+      <div class="meta">Generated: ${generated_at}</div>
+      <div class="meta">Brand: ${brand}</div>
+    </div>
+    <div class="panel">${summary}</div>
+    <div class="panel">${hosts}</div>
+    <div class="panel">${ports}</div>
+    <div class="panel">${services}</div>
+    <div class="panel">${vulns}</div>
+    <div class="panel">${findings}</div>
+    <div class="panel">${risk_summary}</div>
+    <div class="panel">${top_criticals}</div>
+    <div class="panel">${custom_sections}</div>
+  </body>
+</html>
