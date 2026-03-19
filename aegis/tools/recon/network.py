@@ -11,14 +11,19 @@ from aegis.core.ui import console
 
 
 
-def _get_timeout(config, profile: str) -> int:
-    return int(
-        config.get(f"profiles.{profile}.timeout", config.get("general.default_timeout", 30))
-    )
+def _get_timeout(config: object, profile: str) -> int:
+    from aegis.core.config_manager import ConfigManager
+    cfg = config if isinstance(config, ConfigManager) else None
+    if cfg is None:
+        return 30
+    val = cfg.get(f"profiles.{profile}.timeout", cfg.get("general.default_timeout", 30))
+    return int(val) if val is not None else 30
 
 
-def _get_nmap_args(config, profile: str) -> List[str]:
-    args = config.get(f"profiles.{profile}.nmap_args", "-sC -sV")
+def _get_nmap_args(config: object, profile: str) -> List[str]:
+    from aegis.core.config_manager import ConfigManager
+    cfg = config if isinstance(config, ConfigManager) else None
+    args = cfg.get(f"profiles.{profile}.nmap_args", "-sC -sV") if cfg else "-sC -sV"
     if isinstance(args, str):
         return args.split()
     if isinstance(args, list):
@@ -95,7 +100,7 @@ def cli(
             console.print(table)
 
         if ping_only or not discovered:
-            results = {"cidr": cidr_range, "hosts": discovered, "ports": port_results}
+            results: dict[str, object] = {"cidr": cidr_range, "hosts": discovered, "ports": port_results}
             if json_out:
                 emit_json(results, json_output)
             return
@@ -133,9 +138,9 @@ def cli(
                         port_results.setdefault(ip, []).append(port)
             progress.remove_task(scan_task)
 
-    results = {"cidr": cidr_range, "hosts": discovered, "ports": port_results}
+    final_results: dict[str, object] = {"cidr": cidr_range, "hosts": discovered, "ports": port_results}
     if json_out:
-        emit_json(results, json_output)
+        emit_json(final_results, json_output)
         return
 
     console.print("[bold green]Network reconnaissance complete.[/bold green]")

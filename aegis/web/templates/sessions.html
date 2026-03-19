@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sessions{% endblock %}
+{% block content %}
+<h1>Scan Sessions</h1>
+<table>
+  <tr><th>ID</th><th>Label</th><th>Started</th><th>Finished</th></tr>
+  {% for s in sessions %}
+  <tr>
+    <td>{{ s.id }}</td>
+    <td>{{ s.label }}</td>
+    <td>{{ s.started_at }}</td>
+    <td>{{ s.finished_at or "—" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4">No sessions.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

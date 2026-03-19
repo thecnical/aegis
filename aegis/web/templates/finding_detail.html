@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Finding {{ finding.id }}{% endblock %}
+{% block content %}
+<h1>[{{ finding.severity }}] {{ finding.title }}</h1>
+<p><strong>Source:</strong> {{ finding.source }} | <strong>Category:</strong> {{ finding.category }}</p>
+<p>{{ finding.description }}</p>
+
+<h2>Tags</h2>
+{% for t in tags %}<span class="badge info">{{ t.label }}</span> {% else %}<em>None</em>{% endfor %}
+
+<h2>Notes</h2>
+<div id="notes-list">
+  {% include "partials/notes.html" %}
+</div>
+
+<h2>Add Note</h2>
+<form hx-post="/findings/{{ finding.id }}/notes" hx-target="#notes-list" hx-swap="innerHTML">
+  <textarea name="body" rows="3" placeholder="Add a note..."></textarea><br>
+  <button type="submit">Add Note</button>
+</form>
+{% endblock %}

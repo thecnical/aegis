@@ -1,0 +1,5 @@
+{
+  "name": "api",
+  "command": "api",
+  "description": "API endpoint fuzzing using ffuf"
+}

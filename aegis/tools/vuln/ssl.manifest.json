@@ -1,0 +1,5 @@
+{
+  "name": "ssl",
+  "command": "ssl",
+  "description": "SSL/TLS analysis using testssl.sh"
+}

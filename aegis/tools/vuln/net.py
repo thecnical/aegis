@@ -129,7 +129,7 @@ def cli(
                         console.print("[bold yellow]No shares found.[/bold yellow]")
             progress.remove_task(task)
 
-    results = {
+    results: dict[str, object] = {
         "target": target_ip,
         "default_creds": default_creds if not no_defaults else {},
         "smb_shares": shares,

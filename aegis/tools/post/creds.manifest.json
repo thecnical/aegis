@@ -1,0 +1,5 @@
+{
+  "name": "creds",
+  "command": "creds",
+  "description": "Credential collection via SMB share enumeration (smbclient)"
+}

@@ -4,7 +4,7 @@ import json
 import socket
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Mapping, Optional, Tuple
 from urllib.parse import urlparse
 
 from aegis.core.ui import console
@@ -71,7 +71,7 @@ def ensure_dir(path: str) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def emit_json(data: Dict[str, object], output_path: Optional[str] = None) -> None:
+def emit_json(data: "Mapping[str, object]", output_path: Optional[str] = None) -> None:
     payload = json.dumps(data, indent=2)
     if output_path:
         Path(output_path).write_text(payload, encoding="utf-8")

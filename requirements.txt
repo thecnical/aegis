@@ -1,4 +1,30 @@
-click
-rich
-pyyaml
-requests
+# Core CLI
+click>=8.1
+rich>=13.7
+
+# Config & data
+pyyaml>=6.0
+requests>=2.31
+
+# HTTP (async AI client)
+httpx>=0.27
+
+# DNS enumeration
+dnspython>=2.6
+
+# Web UI
+fastapi>=0.110
+uvicorn[standard]>=0.29
+jinja2>=3.1
+
+# TUI interactive mode
+textual>=0.55
+
+# PDF export
+weasyprint>=62.0
+
+# CVSS scoring
+cvss>=3.0
+
+# Interactive prompts
+questionary>=2.0

@@ -5,7 +5,28 @@ from html import escape
 from importlib import resources
 from pathlib import Path
 from string import Template
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+SEVERITY_RANK: Dict[str, int] = {
+    "info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4
+}
+
+
+def _filter_by_severity(items: List[dict], min_severity: Optional[str]) -> List[dict]:
+    """Return items at or above min_severity threshold."""
+    if not min_severity:
+        return items
+    threshold = SEVERITY_RANK.get(min_severity.lower(), 0)
+    return [i for i in items if SEVERITY_RANK.get(str(i.get("severity", "info")).lower(), 0) >= threshold]
+
+
+def render_report_pdf(html: str) -> bytes:
+    """Convert HTML string to PDF bytes using weasyprint."""
+    try:
+        from weasyprint import HTML  # type: ignore[import]
+        return HTML(string=html).write_pdf()
+    except ImportError as exc:
+        raise RuntimeError("weasyprint is required for PDF export: pip install weasyprint") from exc
 
 
 def _format_section(title: str, items: List[str]) -> str:
@@ -42,7 +63,10 @@ def render_report(
     template_path: str | None,
     brand: str,
     custom_sections: List[dict] | None = None,
+    min_severity: Optional[str] = None,
 ) -> str:
+    ff = _filter_by_severity(data["findings"], min_severity)
+    fv = _filter_by_severity(data["vulns"], min_severity)
     hosts = [f"{h.get('ip')} ({h.get('hostname') or 'unknown'})" for h in data["hosts"]]
     ports = [
         f"Host {p.get('host_id')}: {p.get('port')}/{p.get('protocol')} ({p.get('state')})"
@@ -54,30 +78,25 @@ def render_report(
     ]
     vulns = [
         f"{v.get('name')} ({v.get('severity')}) [{v.get('source')}]: {v.get('description')}"
-        for v in data["vulns"]
+        for v in fv
     ]
-    findings = []
-    for f in data["findings"]:
-        line = f"{f.get('title')} ({f.get('severity')}) [{f.get('source')}]: {f.get('description')}"
-        findings.append(line)
+    findings: List[str] = []
+    for f in ff:
+        findings.append(f"{f.get('title')} ({f.get('severity')}) [{f.get('source')}]: {f.get('description')}")
         for ev_path in evidence_paths.get(int(f.get("id", 0)), []):
             findings.append(f"Evidence: {ev_path}")
 
     severity_counts: Dict[str, int] = {}
-    for item in data["findings"]:
+    for item in ff + fv:
         sev = str(item.get("severity") or "unknown").lower()
         severity_counts[sev] = severity_counts.get(sev, 0) + 1
-    for item in data["vulns"]:
-        sev = str(item.get("severity") or "unknown").lower()
-        severity_counts[sev] = severity_counts.get(sev, 0) + 1
-
     risk_summary = [f"{sev}: {count}" for sev, count in sorted(severity_counts.items())]
 
     criticals: List[str] = []
-    for f in data["findings"]:
+    for f in ff:
         if str(f.get("severity") or "").lower() in {"critical", "high"}:
             criticals.append(f"Finding: {f.get('title')} - {f.get('description')}")
-    for v in data["vulns"]:
+    for v in fv:
         if str(v.get("severity") or "").lower() in {"critical", "high"}:
             criticals.append(f"Vuln: {v.get('name')} - {v.get('description')}")
 
@@ -85,12 +104,11 @@ def render_report(
     for section in custom_sections or []:
         title = str(section.get("title", "Notes"))
         body = str(section.get("body", ""))
-        block = _format_section(title, [body] if body else [])
-        custom_blocks.append(block)
+        custom_blocks.append(_format_section(title, [body] if body else []))
 
     template_text = _load_template(template_path)
-    template = Template(template_text)
-    return template.safe_substitute(
+    tmpl = Template(template_text)
+    return tmpl.safe_substitute(
         title=f"Aegis Report: {target}",
         generated_at=datetime.utcnow().isoformat(),
         brand=brand,
@@ -120,7 +138,10 @@ def render_report_html(
     template_path: str | None,
     brand: str,
     custom_sections: List[dict] | None = None,
+    min_severity: Optional[str] = None,
 ) -> str:
+    ff = _filter_by_severity(data["findings"], min_severity)
+    fv = _filter_by_severity(data["vulns"], min_severity)
     hosts = [f"{h.get('ip')} ({h.get('hostname') or 'unknown'})" for h in data["hosts"]]
     ports = [
         f"Host {p.get('host_id')}: {p.get('port')}/{p.get('protocol')} ({p.get('state')})"
@@ -132,30 +153,25 @@ def render_report_html(
     ]
     vulns = [
         f"{v.get('name')} ({v.get('severity')}) [{v.get('source')}]: {v.get('description')}"
-        for v in data["vulns"]
+        for v in fv
     ]
-    findings = []
-    for f in data["findings"]:
-        line = f"{f.get('title')} ({f.get('severity')}) [{f.get('source')}]: {f.get('description')}"
-        findings.append(line)
+    findings: List[str] = []
+    for f in ff:
+        findings.append(f"{f.get('title')} ({f.get('severity')}) [{f.get('source')}]: {f.get('description')}")
         for ev_path in evidence_paths.get(int(f.get("id", 0)), []):
             findings.append(f"Evidence: {ev_path}")
 
     severity_counts: Dict[str, int] = {}
-    for item in data["findings"]:
+    for item in ff + fv:
         sev = str(item.get("severity") or "unknown").lower()
         severity_counts[sev] = severity_counts.get(sev, 0) + 1
-    for item in data["vulns"]:
-        sev = str(item.get("severity") or "unknown").lower()
-        severity_counts[sev] = severity_counts.get(sev, 0) + 1
-
     risk_summary = [f"{sev}: {count}" for sev, count in sorted(severity_counts.items())]
 
     criticals: List[str] = []
-    for f in data["findings"]:
+    for f in ff:
         if str(f.get("severity") or "").lower() in {"critical", "high"}:
             criticals.append(f"Finding: {f.get('title')} - {f.get('description')}")
-    for v in data["vulns"]:
+    for v in fv:
         if str(v.get("severity") or "").lower() in {"critical", "high"}:
             criticals.append(f"Vuln: {v.get('name')} - {v.get('description')}")
 
@@ -166,8 +182,8 @@ def render_report_html(
         custom_blocks.append(_format_html_section(title, [body] if body else []))
 
     template_text = _load_html_template(template_path)
-    template = Template(template_text)
-    return template.safe_substitute(
+    tmpl = Template(template_text)
+    return tmpl.safe_substitute(
         title=f"Aegis Report: {target}",
         generated_at=datetime.utcnow().isoformat(),
         brand=brand,

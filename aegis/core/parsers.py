@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 SQLMAP_VULN_RE = re.compile(r"is vulnerable|sql injection", re.IGNORECASE)
 SQLMAP_PAYLOAD_RE = re.compile(r"payload\s*:\s*(.+)", re.IGNORECASE)
 
 
-def parse_nmap_xml(xml_output: str) -> Dict[str, object]:
-    results: Dict[str, object] = {"hosts": []}
+def parse_nmap_xml(xml_output: str) -> Dict[str, Any]:
+    results: Dict[str, Any] = {"hosts": []}
     try:
         root = ET.fromstring(xml_output)
     except ET.ParseError:

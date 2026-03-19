@@ -13,7 +13,12 @@ from aegis.core.ui import console
 
 
 
+ALLOWED_TABLES = {"hosts", "ports", "services", "vulnerabilities", "findings", "evidence"}
+
+
 def _fetch_table(conn, table: str) -> List[dict]:
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Invalid table name: {table}")
     cursor = conn.cursor()
     return [dict(row) for row in cursor.execute(f"SELECT * FROM {table}").fetchall()]
 
@@ -48,6 +53,10 @@ def cli(
         console.print("[bold red]Format must be csv or json.[/bold red]")
         return
 
+    if table_name not in ALLOWED_TABLES:
+        console.print(f"[bold red]Invalid table. Choose from: {', '.join(sorted(ALLOWED_TABLES))}[/bold red]")
+        return
+
     conn = db.connect()
     data = _fetch_table(conn, table_name)
 
@@ -65,7 +74,7 @@ def cli(
                 writer.writeheader()
                 writer.writerows(data)
 
-    results = {"table": table_name, "format": format, "output_path": str(output_path)}
+    results: dict[str, object] = {"table": table_name, "format": format, "output_path": str(output_path)}
     if json_out:
         emit_json(results, json_output)
         return

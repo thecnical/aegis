@@ -4,28 +4,82 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aegis-cli"
-version = "0.1.0"
-description = "Aegis - Modular Offensive Security CLI Framework"
+version = "1.0.0"
+description = "Aegis — Modular Offensive Security Platform"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
   { name = "Chandan Pandey" }
 ]
+keywords = ["security", "pentest", "offensive", "recon", "cli"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Environment :: Console",
+  "Topic :: Security",
+]
 dependencies = [
-  "click",
-  "rich",
-  "pyyaml",
-  "requests"
+  "click>=8.1",
+  "rich>=13.7",
+  "pyyaml>=6.0",
+  "requests>=2.31",
+  "httpx>=0.27",
+  "dnspython>=2.6",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.29",
+  "jinja2>=3.1",
+  "textual>=0.55",
+  "weasyprint>=62.0",
+  "cvss>=3.0",
+  "questionary>=2.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "hypothesis>=6.100",
+  "ruff>=0.4",
+  "mypy>=1.10",
+  "types-requests>=2.31",
+  "types-PyYAML>=6.0",
+]
 
 [project.scripts]
-aegis = "main:cli"
+aegis = "aegis.__main__:cli"
+
+[project.urls]
+Homepage = "https://github.com/thecnical/aegis"
+"Bug Tracker" = "https://github.com/thecnical/aegis/issues"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["aegis", "aegis.core", "aegis.tools", "aegis.tools.recon", "aegis.tools.vuln", "aegis.tools.exploit", "aegis.tools.post", "aegis.tools.report", "aegis.templates"]
+packages = [
+  "aegis",
+  "aegis.core",
+  "aegis.tools",
+  "aegis.tools.recon",
+  "aegis.tools.vuln",
+  "aegis.tools.exploit",
+  "aegis.tools.post",
+  "aegis.tools.report",
+  "aegis.templates",
+  "aegis.web",
+  "aegis.tui",
+]
 
 [tool.setuptools.package-data]
-aegis = ["tools/**/*.manifest.json", "templates/*.md", "templates/*.html"]
+aegis = ["tools/**/*.manifest.json", "templates/*.md", "templates/*.html", "web/templates/**/*.html"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,8 @@
+{% for n in notes %}
+<div style="border-left: 3px solid #39d353; padding: 6px 12px; margin: 6px 0;">
+  <small>{{ n.created_at }}</small>
+  <p>{{ n.body }}</p>
+</div>
+{% else %}
+<em>No notes yet.</em>
+{% endfor %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>⚔ Aegis Dashboard</h1>
+<p>Total findings: <strong>{{ total }}</strong></p>
+<div>
+{% for sev, cnt in counts.items() %}
+  <div class="card">
+    <div class="count">{{ cnt }}</div>
+    <div><span class="badge {{ sev }}">{{ sev }}</span></div>
+  </div>
+{% endfor %}
+</div>
+<p><a href="/findings">View all findings →</a></p>
+{% endblock %}

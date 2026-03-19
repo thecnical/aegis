@@ -98,22 +98,23 @@ def cli(
                     nuclei_findings = parse_nuclei_json_lines(out)
             progress.remove_task(task)
 
-    results = {
+    json_results = {
         "url": url,
         "dir_findings": sorted(set(dir_findings)),
         "nuclei_findings": nuclei_findings,
     }
 
     if json_out:
-        emit_json(results, json_output)
+        from typing import cast, Mapping
+        emit_json(cast(Mapping[str, object], json_results), json_output)
         return
 
     if dir_findings:
-        table = Table(title="Directory Scan Results")
-        table.add_column("Path", style="cyan")
-        for item in sorted(set(dir_findings)):
-            table.add_row(item)
-        console.print(table)
+        dir_table = Table(title="Directory Scan Results")
+        dir_table.add_column("Path", style="cyan")
+        for path_str in sorted(set(dir_findings)):
+            dir_table.add_row(path_str)
+        console.print(dir_table)
 
     if nuclei_findings:
         table = Table(title="Nuclei Findings")

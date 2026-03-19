@@ -1,25 +1,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import click
 from rich.table import Table
 
-from aegis.core.reporting import render_report, render_report_html
+from aegis.core.reporting import render_report, render_report_html, render_report_pdf
 from aegis.core.utils import emit_json, ensure_dir
 from aegis.core.ui import console
 
 
-
 def _fetch_all(conn) -> Dict[str, List[dict]]:
     results: Dict[str, List[dict]] = {
-        "hosts": [],
-        "ports": [],
-        "services": [],
-        "vulns": [],
-        "findings": [],
-        "evidence": [],
+        "hosts": [], "ports": [], "services": [], "vulns": [], "findings": [], "evidence": [],
     }
     cursor = conn.cursor()
     results["hosts"] = [dict(row) for row in cursor.execute("SELECT * FROM hosts").fetchall()]
@@ -34,23 +28,23 @@ def _fetch_all(conn) -> Dict[str, List[dict]]:
 @click.command("generate")
 @click.argument("target")
 @click.option(
-    "--format",
-    "report_format",
-    type=click.Choice(["md", "html"], case_sensitive=False),
-    default="md",
-    show_default=True,
+    "--format", "report_format",
+    type=click.Choice(["md", "html", "pdf"], case_sensitive=False),
+    default="md", show_default=True,
 )
-@click.option("--json", "json_out", is_flag=True, help="Output results as JSON.")
-@click.option("--json-output", default=None, help="Write JSON to a file.")
+@click.option("--min-severity", default=None, help="Minimum severity to include (info/low/medium/high/critical).")
+@click.option("--json", "json_out", is_flag=True)
+@click.option("--json-output", default=None)
 @click.pass_context
 def cli(
     ctx: click.Context,
     target: str,
     report_format: str,
+    min_severity: Optional[str],
     json_out: bool,
-    json_output: str | None,
+    json_output: Optional[str],
 ) -> None:
-    """Generate a Markdown report from the database."""
+    """Generate a report from the database."""
     context = ctx.obj
     db = context.db
     json_out = json_out or getattr(context, "json_out", False)
@@ -61,13 +55,14 @@ def cli(
 
     ensure_dir("data/reports")
     ensure_dir("data/evidence")
-    report_path = Path("data/reports") / f"{target}.{report_format}"
+
+    ext = "pdf" if report_format == "pdf" else report_format
+    report_path = Path("data/reports") / f"{target}.{ext}"
 
     evidence_map: Dict[int, List[dict]] = {}
     evidence_paths: Dict[int, List[str]] = {}
     for ev in data["evidence"]:
         evidence_map.setdefault(int(ev.get("finding_id", 0)), []).append(ev)
-
     for finding_id, ev_list in evidence_map.items():
         for ev in ev_list:
             ev_path = Path("data/evidence") / f"evidence_{ev.get('id')}_{ev.get('kind')}.txt"
@@ -78,28 +73,31 @@ def cli(
     template_path_html = context.config.get("general.report_template_html", "")
     brand = context.config.get("general.brand", "Aegis")
     custom_sections = context.config.get("general.report_custom_sections", []) or []
-    if report_format == "html":
-        report_text = render_report_html(
-            target=target,
-            data=data,
-            evidence_paths=evidence_paths,
-            template_path=template_path_html or None,
-            brand=brand,
-            custom_sections=custom_sections,
+
+    if report_format == "pdf":
+        html_text = render_report_html(
+            target=target, data=data, evidence_paths=evidence_paths,
+            template_path=template_path_html or None, brand=brand,
+            custom_sections=custom_sections, min_severity=min_severity,
         )
+        pdf_bytes = render_report_pdf(html_text)
+        report_path.write_bytes(pdf_bytes)
+    elif report_format == "html":
+        report_text = render_report_html(
+            target=target, data=data, evidence_paths=evidence_paths,
+            template_path=template_path_html or None, brand=brand,
+            custom_sections=custom_sections, min_severity=min_severity,
+        )
+        report_path.write_text(report_text, encoding="utf-8")
     else:
         report_text = render_report(
-            target=target,
-            data=data,
-            evidence_paths=evidence_paths,
-            template_path=template_path or None,
-            brand=brand,
-            custom_sections=custom_sections,
+            target=target, data=data, evidence_paths=evidence_paths,
+            template_path=template_path or None, brand=brand,
+            custom_sections=custom_sections, min_severity=min_severity,
         )
-    report_path.write_text(report_text, encoding="utf-8")
+        report_path.write_text(report_text, encoding="utf-8")
 
-    results = {"target": target, "report_path": str(report_path)}
-
+    results: dict[str, object] = {"target": target, "report_path": str(report_path)}
     if json_out:
         emit_json(results, json_output)
         return

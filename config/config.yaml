@@ -1,5 +1,8 @@
-# Global configuration for Aegis
-# Update these values to match your environment.
+# ─────────────────────────────────────────────────────────────────────────────
+# Aegis Configuration
+# Created by Chandan Pandey
+# Docs: https://github.com/chandanpandey/aegis
+# ─────────────────────────────────────────────────────────────────────────────
 
 general:
   data_path: "data"
@@ -12,6 +15,8 @@ general:
   report_template: ""
   report_template_html: ""
   brand: "Chandan Pandey"
+  workspace: "default"
+  screenshot_path: "data/screenshots"
   report_custom_sections:
     - title: "Engagement Notes"
       body: "Add scope, exclusions, and testing notes here."
@@ -20,10 +25,20 @@ general:
   wordlists_path: "data/wordlists"
   wordlists_repo: "https://github.com/danielmiessler/SecLists.git"
 
+# ─── API Keys ─────────────────────────────────────────────────────────────────
+# Replace CHANGE_ME with your actual keys.
 api_keys:
-  shodan: "pMMwG8JZNwvLKEy28rrP3W9hdQi7g8v8"
+  shodan: "CHANGE_ME"
   wappalyzer: "CHANGE_ME"
+  openrouter: "CHANGE_ME"   # https://openrouter.ai/keys  (free tier available)
+  bytez: "CHANGE_ME"        # https://bytez.com           (free tier available)
 
+# ─── Notifications ────────────────────────────────────────────────────────────
+notifications:
+  slack_webhook: ""         # https://api.slack.com/messaging/webhooks
+  discord_webhook: ""       # Server Settings → Integrations → Webhooks
+
+# ─── Scan Profiles ────────────────────────────────────────────────────────────
 profiles:
   default:
     timeout: 30
@@ -37,20 +52,43 @@ profiles:
     ferox_depth: 1
   deep:
     timeout: 90
-    nmap_args: "-sC -sV -A"
+    nmap_args: "-sC -sV -A -O --script=vuln"
     nuclei_rate: 50
     ferox_depth: 4
+  stealth:
+    timeout: 120
+    nmap_args: "-sS -T2 --randomize-hosts"
+    nuclei_rate: 20
+    ferox_depth: 2
 
+# ─── External Tools ───────────────────────────────────────────────────────────
+# Set to the command name (if on PATH) or full absolute path.
 external_tools:
+  # Core
   nmap: "nmap"
+  netcat: "nc"
+  # Recon
   subfinder: "subfinder"
-  shodan: "shodan"
+  amass: "amass"
+  # Vuln
   nuclei: "nuclei"
   feroxbuster: "feroxbuster"
+  nikto: "nikto"
+  testssl: "testssl.sh"
+  ffuf: "ffuf"
+  # Exploit
   sqlmap: "sqlmap"
   hydra: "hydra"
-  netcat: "nc"
+  metasploit: "msfconsole"
+  # Post
   smbclient: "smbclient"
-  wappalyzer: "wappalyzer"
   linpeas: "linpeas.sh"
   winpeas: "winpeas.exe"
+  # OSINT / Passive
+  shodan: "shodan"
+  wappalyzer: "wappalyzer"
+  theHarvester: "theHarvester"
+  # Screenshots
+  gowitness: "gowitness"
+  # Git
+  git: "git"

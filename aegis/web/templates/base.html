@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegis - {% block title %}Dashboard{% endblock %}</title>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<style>
+  body { font-family: monospace; background: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
+  h1, h2 { color: #39d353; }
+  a { color: #58a6ff; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; }
+  th { background: #161b22; color: #39d353; }
+  tr:hover { background: #161b22; }
+  .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.85em; }
+  .critical { background: #da3633; } .high { background: #d29922; }
+  .medium { background: #e3b341; color: #000; } .low { background: #388bfd; }
+  .info { background: #30363d; }
+  nav { margin-bottom: 20px; }
+  nav a { margin-right: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 16px; margin: 8px; display: inline-block; min-width: 120px; text-align: center; }
+  .card .count { font-size: 2em; color: #39d353; }
+  form input, form textarea { background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; padding: 6px; width: 100%; }
+  form button { background: #238636; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Dashboard</a>
+  <a href="/findings">Findings</a>
+  <a href="/sessions">Sessions</a>
+</nav>
+{% block content %}{% endblock %}
+</body>
+</html>

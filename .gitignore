@@ -1,10 +1,63 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
 .venv/
 venv/
 ENV/
 env/
 .env
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Kiro / Zencoder / Zenflow (tool-specific, not project files)
 .zencoder/
 .zenflow/
+.kiro/
+
+# Hypothesis test database
+.hypothesis/
+
+# Aegis runtime data (never commit these)
+data/aegis.db
+data/campaigns.json
+data/logs/
+data/reports/
+data/exports/
+data/evidence/
+data/screenshots/
+data/wordlists/
+data/tools/
+data/workspaces/
+!data/.gitkeep
+!data/logs/.gitkeep
+!data/reports/.gitkeep
+!data/exports/.gitkeep
+!data/evidence/.gitkeep
+
+# Secrets — never commit real keys
+# config/config.yaml is committed but with CHANGE_ME placeholders only
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/

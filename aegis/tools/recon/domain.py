@@ -156,7 +156,7 @@ def cli(
                     techs = _parse_wappalyzer_output(out)
             progress.remove_task(task)
 
-    results = {
+    results: dict[str, object] = {
         "domain": domain_name,
         "subdomains": subdomains,
         "shodan_ports": shodan_ports,

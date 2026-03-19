@@ -126,3 +126,71 @@ def validate_environment() -> Tuple[bool, str]:
     if not _is_debian_like():
         return False, "installer supports Debian/Ubuntu/Kali only"
     return True, ""
+
+
+# Prerequisite binaries required per tool name
+_PREREQS: Dict[str, str] = {
+    "subfinder": "go",
+    "nuclei": "go",
+    "feroxbuster": "cargo",
+    "wappalyzer": "npm",
+}
+
+
+def run_install_plan_interactive(
+    plan: List[Tuple[str, List[str]]],
+    assume_yes: bool = False,
+    dry_run: bool = False,
+) -> Dict[str, str]:
+    """Run install plan with per-tool interactive prompts.
+
+    Returns a dict mapping tool name → outcome string.
+    """
+    import sys
+
+    if not _is_linux():
+        console.print("[error]install-tools supports Linux only.[/error]")
+        sys.exit(1)
+
+    results: Dict[str, str] = {}
+
+    for name, cmd in plan:
+        # Check prerequisite binary
+        prereq = _PREREQS.get(name)
+        if prereq and not which(prereq):
+            console.print(
+                f"[bold yellow]Skipping {name}:[/bold yellow] prerequisite '{prereq}' not on PATH"
+            )
+            results[name] = "skipped"
+            continue
+
+        if dry_run:
+            console.print(f"[primary]DRY-RUN[/primary] {name}: {' '.join(cmd)}")
+            results[name] = "dry-run"
+            continue
+
+        if not assume_yes:
+            try:
+                answer = input(f"Install {name} ({' '.join(cmd)})? [y/N] ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                console.print("\n[warning]Aborted.[/warning]")
+                break
+            if answer not in ("y", "yes"):
+                console.print(f"[dim]Skipped {name}.[/dim]")
+                results[name] = "skipped"
+                continue
+
+        if not which(cmd[0]):
+            console.print(f"[warning]Skipping {name}, missing tool:[/warning] {cmd[0]}")
+            results[name] = "skipped"
+            continue
+
+        code, out, err = run_command(cmd, timeout=None)
+        if code != 0:
+            console.print(f"[error]Failed {name}:[/error] {err or out}")
+            results[name] = "failed"
+        else:
+            console.print(f"[primary]{name}[/primary]: ok")
+            results[name] = "ok"
+
+    return results

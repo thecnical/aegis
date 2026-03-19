@@ -1,0 +1,5 @@
+{
+  "name": "osint",
+  "command": "osint",
+  "description": "OSINT collection using theHarvester (emails, subdomains, LinkedIn)"
+}

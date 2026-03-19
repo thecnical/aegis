@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Findings{% endblock %}
+{% block content %}
+<h1>Findings</h1>
+<table>
+  <tr><th>ID</th><th>Title</th><th>Severity</th><th>Source</th><th>Created</th></tr>
+  {% for f in findings %}
+  <tr>
+    <td><a href="/findings/{{ f.id }}">{{ f.id }}</a></td>
+    <td>{{ f.title }}</td>
+    <td><span class="badge {{ f.severity }}">{{ f.severity }}</span></td>
+    <td>{{ f.source }}</td>
+    <td>{{ f.created_at }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5">No findings.</td></tr>
+  {% endfor %}
+</table>
+<p>
+  {% if page > 1 %}<a href="/findings?page={{ page - 1 }}">← Prev</a>{% endif %}
+  &nbsp;<a href="/findings?page={{ page + 1 }}">Next →</a>
+</p>
+{% endblock %}
