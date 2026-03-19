@@ -43,6 +43,7 @@ dependencies = [
   "requests>=2.31",
   "httpx>=0.27",
   "dnspython>=2.6",
+  "defusedxml>=0.7",
   "fastapi>=0.110",
   "uvicorn[standard]>=0.29",
   "jinja2>=3.1",

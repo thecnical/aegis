@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import io
 import json
 import uuid
 from pathlib import Path
@@ -10,7 +9,7 @@ from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from aegis.core.config_manager import ConfigManager
@@ -286,7 +285,6 @@ async def _run_scan_job(job_id: str, target: str, phases: list[str]) -> None:
             report_format="md",
         )
         # Override phases
-        from aegis.core.ai_orchestrator import PHASE_TOOLS
         orchestrator._phase_summaries = {}
         orchestrator._findings = []
 

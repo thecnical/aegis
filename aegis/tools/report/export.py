@@ -20,7 +20,8 @@ def _fetch_table(conn, table: str) -> List[dict]:
     if table not in ALLOWED_TABLES:
         raise ValueError(f"Invalid table name: {table}")
     cursor = conn.cursor()
-    return [dict(row) for row in cursor.execute(f"SELECT * FROM {table}").fetchall()]
+    # nosec B608 — table name is validated against ALLOWED_TABLES allowlist above
+    return [dict(row) for row in cursor.execute(f"SELECT * FROM {table}").fetchall()]  # nosec B608
 
 
 @click.command("export")

@@ -4,8 +4,10 @@ from __future__ import annotations
 import base64
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
+
+import defusedxml.ElementTree as DefusedET  # safe XML parsing (prevents XXE)
 
 from aegis.core.db_manager import DatabaseManager
 
@@ -70,7 +72,7 @@ def parse_burp_xml(xml_path: str) -> list[BurpIssue]:
     cleaned = _strip_doctype(raw)
 
     try:
-        root = ET.fromstring(cleaned)
+        root = DefusedET.fromstring(cleaned)
     except ET.ParseError as exc:
         raise ValueError(f"Failed to parse Burp XML: {exc}") from exc
 
@@ -127,7 +129,7 @@ def import_burp_xml(
 
     try:
         issues = parse_burp_xml(xml_path)
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError):
         counts["errors"] += 1
         return counts
 
