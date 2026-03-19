@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>${title}</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; color: #333; line-height: 1.6; }
+      h1 { font-size: 1.6rem; border-bottom: 2px solid #333; padding-bottom: 6px; }
+      h2 { font-size: 1.2rem; color: #555; margin-top: 24px; }
+      .meta { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+      ul { padding-left: 20px; }
+      li { margin-bottom: 4px; font-size: 0.9rem; }
+      .section { margin-bottom: 28px; }
+    </style>
+  </head>
+  <body>
+    <h1>${title}</h1>
+    <div class="meta">Generated: ${generated_at} | ${brand}</div>
+
+    <div class="section">${summary}</div>
+    <div class="section">${risk_summary}</div>
+    <div class="section">${top_criticals}</div>
+    <div class="section">${hosts}</div>
+    <div class="section">${ports}</div>
+    <div class="section">${services}</div>
+    <div class="section">${vulns}</div>
+    <div class="section">${findings}</div>
+    <div class="section">${custom_sections}</div>
+  </body>
+</html>

@@ -869,6 +869,325 @@ def campaign_report(name: str) -> None:
         console.print(f"[primary]Campaign report saved:[/primary] {report_path}")
 
 
+@campaign_group.command("add-target")
+@click.argument("name")
+@click.argument("target")
+@click.option("--kind", default="domain", type=click.Choice(["domain", "ip", "cidr", "url"]), show_default=True)
+@pass_context
+def campaign_add_target(ctx: AegisContext, name: str, target: str, kind: str) -> None:
+    """Add a target to an existing campaign."""
+    tid = ctx.db.add_campaign_target(name, target, kind)
+    console.print(f"[primary]Target added to campaign '{name}':[/primary] id={tid}  {kind}:{target}")
+
+
+@campaign_group.command("run-parallel")
+@click.argument("name")
+@click.option("--targets", "targets_file", required=True, help="File with one target per line.")
+@click.option("--max-parallel", default=3, show_default=True, type=int)
+@click.option("--phases", "phases_str", default="recon,vuln", show_default=True, help="Comma-separated phases.")
+@click.option("--dry-run", is_flag=True)
+@pass_context
+def campaign_run_parallel(
+    ctx: AegisContext,
+    name: str,
+    targets_file: str,
+    max_parallel: int,
+    phases_str: str,
+    dry_run: bool,
+) -> None:
+    """Run parallel scans against multiple targets from a file."""
+    from pathlib import Path as _Path
+    from aegis.core.campaign_runner import CampaignRunner, CampaignTarget
+
+    targets_path = _Path(targets_file)
+    if not targets_path.exists():
+        console.print(f"[error]Targets file not found:[/error] {targets_file}")
+        return
+
+    raw_lines = targets_path.read_text(encoding="utf-8").splitlines()
+    targets: list[CampaignTarget] = []
+    for line in raw_lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Detect kind
+        if "/" in line and not line.startswith("http"):
+            kind = "cidr"
+        elif line.startswith("http"):
+            kind = "url"
+        elif any(c.isalpha() for c in line.split(".")[-1]):
+            kind = "domain"
+        else:
+            kind = "ip"
+        targets.append(CampaignTarget(target=line, kind=kind))
+
+    if not targets:
+        console.print("[warning]No targets found in file.[/warning]")
+        return
+
+    phases = [p.strip() for p in phases_str.split(",") if p.strip()]
+    runner = CampaignRunner(
+        config=ctx.config,
+        db=ctx.db,
+        scope=ctx.scope,
+        max_parallel=max_parallel,
+        phases=phases,
+        dry_run=dry_run,
+    )
+
+    console.print(f"[accent]Running parallel campaign '{name}' against {len(targets)} targets (max_parallel={max_parallel})...[/accent]")
+    run = runner.run(name, targets)
+
+    table = Table(title=f"Campaign '{name}' Results")
+    table.add_column("Target", style="cyan")
+    table.add_column("Session", style="magenta")
+    table.add_column("Findings", style="green")
+    table.add_column("Duration", style="dim")
+    table.add_column("Error", style="red")
+    for result in run.results:
+        table.add_row(
+            result.target,
+            str(result.session_id),
+            str(result.findings_count),
+            f"{result.duration_seconds:.1f}s",
+            result.error or "",
+        )
+    console.print(table)
+    console.print(f"[primary]Total findings:[/primary] {run.total_findings}")
+
+
+# ─── burp ─────────────────────────────────────────────────────────────────────
+
+@cli.group("burp")
+def burp_group() -> None:
+    """Burp Suite integration."""
+
+
+@burp_group.command("import")
+@click.argument("xml_file")
+@click.option("--dry-run", is_flag=True, help="Preview without importing.")
+@pass_context
+def burp_import_cmd(ctx: AegisContext, xml_file: str, dry_run: bool) -> None:
+    """Import findings from a Burp Suite XML export."""
+    from aegis.core.burp_importer import import_burp_xml
+
+    if dry_run:
+        console.print(f"[accent]DRY RUN — parsing {xml_file}...[/accent]")
+    else:
+        console.print(f"[accent]Importing {xml_file}...[/accent]")
+
+    counts = import_burp_xml(xml_file, ctx.db, dry_run=dry_run)
+    table = Table(title="Burp Import Results")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", style="green")
+    for key, val in counts.items():
+        table.add_row(key, str(val))
+    console.print(table)
+
+
+@burp_group.command("list")
+@pass_context
+def burp_list_cmd(ctx: AegisContext) -> None:
+    """List all Burp-imported findings."""
+    conn = ctx.db.connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM findings WHERE source = 'burp' ORDER BY created_at DESC")
+    findings = [dict(row) for row in cursor.fetchall()]
+    table = Table(title="Burp Findings")
+    table.add_column("ID", style="cyan")
+    table.add_column("Title", style="white")
+    table.add_column("Severity", style="magenta")
+    table.add_column("Created", style="dim")
+    for f in findings:
+        table.add_row(str(f["id"]), str(f["title"]), str(f.get("severity", "")), str(f.get("created_at", "")))
+    console.print(table)
+
+
+# ─── cve ──────────────────────────────────────────────────────────────────────
+
+@cli.group("cve")
+def cve_group() -> None:
+    """CVE correlation via NVD."""
+
+
+@cve_group.command("correlate")
+@click.option("--session", "session_id", default=None, type=int)
+@pass_context
+def cve_correlate_cmd(ctx: AegisContext, session_id: Optional[int]) -> None:
+    """Correlate findings with CVEs from NVD."""
+    from aegis.core.cve_correlator import correlate_all_findings
+
+    api_key = str(ctx.config.get("api_keys.nvd", "") or "")
+    console.print("[accent]Correlating findings with NVD CVEs...[/accent]")
+    results = correlate_all_findings(ctx.db, session_id=session_id, api_key=api_key or None)
+    total_cves = sum(len(v) for v in results.values())
+    console.print(f"[primary]Correlated {len(results)} findings, found {total_cves} CVE matches.[/primary]")
+
+
+@cve_group.command("search")
+@click.argument("keyword")
+@click.option("--max", "max_results", default=5, show_default=True, type=int)
+@pass_context
+def cve_search_cmd(ctx: AegisContext, keyword: str, max_results: int) -> None:
+    """Search NVD directly for CVEs matching a keyword."""
+    from aegis.core.cve_correlator import search_cve
+
+    api_key = str(ctx.config.get("api_keys.nvd", "") or "")
+    console.print(f"[accent]Searching NVD for:[/accent] {keyword}")
+    matches = search_cve(keyword, max_results=max_results, api_key=api_key or None)
+    if not matches:
+        console.print("[warning]No CVEs found.[/warning]")
+        return
+    table = Table(title=f"CVE Search: {keyword}")
+    table.add_column("CVE ID", style="cyan")
+    table.add_column("CVSS", style="magenta")
+    table.add_column("Severity", style="red")
+    table.add_column("Published", style="dim")
+    table.add_column("Description", style="white")
+    for m in matches:
+        table.add_row(
+            m.cve_id,
+            str(m.cvss_score or "N/A"),
+            m.severity,
+            m.published[:10] if m.published else "",
+            m.description[:80] + "..." if len(m.description) > 80 else m.description,
+        )
+    console.print(table)
+
+
+@cve_group.command("list")
+@click.option("--finding", "finding_id", required=True, type=int)
+@pass_context
+def cve_list_cmd(ctx: AegisContext, finding_id: int) -> None:
+    """List CVEs linked to a finding."""
+    cves = ctx.db.get_cve_correlations(finding_id)
+    if not cves:
+        console.print(f"[warning]No CVEs linked to finding {finding_id}.[/warning]")
+        return
+    table = Table(title=f"CVEs for finding {finding_id}")
+    table.add_column("CVE ID", style="cyan")
+    table.add_column("CVSS", style="magenta")
+    table.add_column("Severity", style="red")
+    table.add_column("URL", style="blue")
+    for c in cves:
+        table.add_row(
+            str(c["cve_id"]),
+            str(c.get("cvss_score") or "N/A"),
+            str(c.get("severity", "")),
+            str(c.get("url", "")),
+        )
+    console.print(table)
+
+
+# ─── sarif ────────────────────────────────────────────────────────────────────
+
+@cli.group("sarif")
+def sarif_group() -> None:
+    """SARIF export for GitHub Code Scanning."""
+
+
+@sarif_group.command("export")
+@click.option("--session", "session_id", default=None, type=int)
+@click.option("--output", "output_path", default=None, help="Output file path.")
+@pass_context
+def sarif_export_cmd(ctx: AegisContext, session_id: Optional[int], output_path: Optional[str]) -> None:
+    """Export findings as SARIF v2.1.0."""
+    from aegis.core.sarif_exporter import export_sarif_file
+    from pathlib import Path as _Path
+
+    if not output_path:
+        from datetime import datetime as _dt
+        ts = _dt.utcnow().strftime("%Y%m%dT%H%M%S")
+        suffix = f"session{session_id}" if session_id else "all"
+        output_path = f"data/reports/aegis-{suffix}-{ts}.sarif"
+
+    _Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    path = export_sarif_file(ctx.db, output_path, session_id=session_id)
+    console.print(f"[primary]SARIF exported:[/primary] {path}")
+
+
+# ─── template ─────────────────────────────────────────────────────────────────
+
+@cli.group("template")
+def template_group() -> None:
+    """Manage report templates."""
+
+
+@template_group.command("list")
+def template_list_cmd() -> None:
+    """List available report templates."""
+    from aegis.core.template_manager import TemplateManager
+
+    tm = TemplateManager()
+    templates = tm.list_templates()
+    table = Table(title="Report Templates")
+    table.add_column("Name", style="cyan")
+    table.add_column("Kind", style="magenta")
+    table.add_column("Available", style="green")
+    table.add_column("Path", style="dim")
+    for t in templates:
+        table.add_row(
+            t["name"],
+            t["kind"],
+            "yes" if t["available"] else "no",
+            str(t.get("path") or ""),
+        )
+    console.print(table)
+
+
+@template_group.command("install")
+@click.argument("path")
+@click.option("--name", required=True, help="Template name.")
+def template_install_cmd(path: str, name: str) -> None:
+    """Install a custom template from a file."""
+    from aegis.core.template_manager import TemplateManager
+
+    tm = TemplateManager()
+    try:
+        dest = tm.install_template(path, name)
+        console.print(f"[primary]Template installed:[/primary] {name} → {dest}")
+    except FileNotFoundError as exc:
+        console.print(f"[error]{exc}[/error]")
+
+
+@template_group.command("validate")
+@click.argument("path")
+def template_validate_cmd(path: str) -> None:
+    """Validate a template file."""
+    from aegis.core.template_manager import TemplateManager
+
+    tm = TemplateManager()
+    valid, msg = tm.validate_template(path)
+    if valid:
+        console.print(f"[primary]Valid:[/primary] {msg}")
+    else:
+        console.print(f"[error]Invalid:[/error] {msg}")
+
+
+# ─── api ──────────────────────────────────────────────────────────────────────
+
+@cli.group("api")
+def api_group() -> None:
+    """REST API server."""
+
+
+@api_group.command("serve")
+@click.option("--host", default="127.0.0.1", show_default=True)
+@click.option("--port", default=8888, show_default=True, type=int)
+@pass_context
+def api_serve_cmd(ctx: AegisContext, host: str, port: int) -> None:
+    """Start the Aegis REST API server."""
+    try:
+        import uvicorn
+        from aegis.api.app import app as rest_app, configure as api_configure
+
+        api_configure(ctx.config, ctx.db)
+        console.print(f"[primary]Starting REST API at http://{host}:{port}[/primary]")
+        uvicorn.run(rest_app, host=host, port=port)
+    except ImportError:
+        console.print("[error]uvicorn not available. Install with: pip install uvicorn[/error]")
+
+
 # ─── tool groups ──────────────────────────────────────────────────────────────
 
 @cli.group()

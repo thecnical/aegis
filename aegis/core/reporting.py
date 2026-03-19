@@ -64,6 +64,11 @@ def render_report(
     brand: str,
     custom_sections: List[dict] | None = None,
     min_severity: Optional[str] = None,
+    company_name: str = "",
+    company_logo: str = "",
+    classification: str = "Confidential",
+    assessor_name: str = "",
+    executive_summary: str = "",
 ) -> str:
     ff = _filter_by_severity(data["findings"], min_severity)
     fv = _filter_by_severity(data["vulns"], min_severity)
@@ -112,6 +117,11 @@ def render_report(
         title=f"Aegis Report: {target}",
         generated_at=datetime.utcnow().isoformat(),
         brand=brand,
+        company_name=company_name or brand,
+        company_logo=company_logo,
+        classification=classification,
+        assessor_name=assessor_name or brand,
+        executive_summary=executive_summary,
         summary=_format_section("Summary", [f"Target: {target}"]),
         hosts=_format_section("Hosts", hosts),
         ports=_format_section("Open Ports", ports),
@@ -139,6 +149,11 @@ def render_report_html(
     brand: str,
     custom_sections: List[dict] | None = None,
     min_severity: Optional[str] = None,
+    company_name: str = "",
+    company_logo: str = "",
+    classification: str = "Confidential",
+    assessor_name: str = "",
+    executive_summary: str = "",
 ) -> str:
     ff = _filter_by_severity(data["findings"], min_severity)
     fv = _filter_by_severity(data["vulns"], min_severity)
@@ -187,6 +202,11 @@ def render_report_html(
         title=f"Aegis Report: {target}",
         generated_at=datetime.utcnow().isoformat(),
         brand=brand,
+        company_name=company_name or brand,
+        company_logo=company_logo,
+        classification=classification,
+        assessor_name=assessor_name or brand,
+        executive_summary=executive_summary,
         summary=_format_html_section("Summary", [f"Target: {target}"]),
         hosts=_format_html_section("Hosts", hosts),
         ports=_format_html_section("Open Ports", ports),

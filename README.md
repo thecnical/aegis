@@ -17,6 +17,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](Dockerfile)
 [![mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square)](https://mypy-lang.org)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-orange?style=flat-square)](https://github.com/astral-sh/ruff)
+[![PyPI](https://img.shields.io/badge/PyPI-aegis--cli-blue?style=flat-square&logo=pypi)](https://pypi.org/project/aegis-cli/)
 
 *One command. Every phase. AI-driven.*
 
@@ -29,7 +30,9 @@
 
 ## What is Aegis?
 
-Aegis is a modular CLI platform that unifies the full penetration testing lifecycle — recon, vulnerability scanning, exploitation, post-exploitation, and reporting — behind a single consistent interface. It wraps industry-standard tools (Nmap, Nuclei, ffuf, testssl.sh, theHarvester, and more) and adds AI-driven orchestration, workspace isolation, scope enforcement, deduplication, and real-time notifications.
+**Aegis** is a modular, AI-augmented CLI platform for the full penetration testing lifecycle — recon, vulnerability scanning, exploitation, post-exploitation, and reporting — behind a single consistent interface.
+
+It wraps industry-standard tools (Nmap, Nuclei, ffuf, testssl.sh, theHarvester, and more), adds AI-driven autonomous orchestration, Burp Suite XML import, NVD/CVE correlation, SARIF export for GitHub Code Scanning, parallel multi-target campaigns, REST API for CI/CD pipelines, workspace isolation, scope enforcement, deduplication, and real-time notifications.
 
 **The headline feature:** `aegis ai auto --target <host>` — give it a target, walk away, come back to a full report.
 
@@ -38,18 +41,23 @@ Aegis is a modular CLI platform that unifies the full penetration testing lifecy
 ## Feature Highlights
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  🤖  AI Autonomous Mode   — full pentest from one command       │
-│  🗂️  Workspace Isolation  — separate DB per engagement          │
-│  🎯  Scope Enforcement    — safe-mode abort for out-of-scope    │
-│  🔁  Deduplication        — SHA-256 fingerprinting, no noise    │
-│  📊  CVSS v3.1 Scoring    — automatic severity assignment       │
-│  🌐  Web UI               — FastAPI + htmx findings dashboard   │
-│  🖥️  Terminal UI          — full Textual TUI                    │
-│  🔔  Notifications        — Slack & Discord webhooks            │
-│  👁️  Watch Mode           — continuous monitoring, new-only     │
-│  📄  PDF Reports          — Markdown / HTML / PDF export        │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  🤖  AI Autonomous Mode     — full pentest from one command             │
+│  �  Burp Suite Import      — parse & import Burp XML exports           │
+│  🔗  CVE Correlation        — auto-link findings to NVD/CVE database    │
+│  �  SARIF Export           — plug into GitHub Code Scanning natively   │
+│  �  Parallel Campaigns     — scan a list of hosts concurrently         │
+│  🎨  Custom Templates       — branded PDF report templates              │
+│  🌐  REST API               — headless CI/CD integration                │
+│  🗂️  Workspace Isolation    — separate DB per engagement                │
+│  🎯  Scope Enforcement      — safe-mode abort for out-of-scope          │
+│  🔁  Deduplication          — SHA-256 fingerprinting, no noise          │
+│  📊  CVSS v3.1 Scoring      — automatic severity assignment             │
+│  🖥️  Web UI + TUI           — FastAPI dashboard + Textual TUI           │
+│  🔔  Notifications          — Slack & Discord webhooks                  │
+│  👁️  Watch Mode             — continuous monitoring, new-only alerts    │
+│  📄  PDF Reports            — Markdown / HTML / PDF export              │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Domain | Capabilities |
@@ -59,6 +67,12 @@ Aegis is a modular CLI platform that unifies the full penetration testing lifecy
 | **Exploit** | LFI, SSRF |
 | **Post** | SMB credential harvesting |
 | **AI** | Triage, summarize, suggest, report, chat, **autonomous orchestration** |
+| **Burp** | XML import with base64 decode, request/response evidence storage |
+| **CVE** | NVD API v2 correlation, CVSS v3.1 scoring, per-finding CVE list |
+| **SARIF** | v2.1.0 export with OWASP refs, GitHub Code Scanning compatible |
+| **Campaigns** | Parallel multi-target runner with semaphore concurrency |
+| **Templates** | Custom HTML/Markdown report templates with validation |
+| **REST API** | FastAPI, async scan jobs, Burp import, CVE, SARIF, scope endpoints |
 | **Reporting** | Markdown, HTML, PDF with severity filtering |
 
 ---
@@ -118,12 +132,6 @@ Target ──► Scope Check ──► Recon ──► Vuln Scan ──► Explo
                          target        findings
 ```
 
-- AI selects which tools to run per phase based on accumulated findings
-- All findings stored in a named session in SQLite
-- Final report generated in Markdown, HTML, or PDF
-- Scope enforcement — aborts if target is out of scope and `safe_mode: true`
-- Missing tools are skipped gracefully with a warning
-
 Configure AI providers in `config/config.yaml`:
 
 ```yaml
@@ -131,6 +139,142 @@ api_keys:
   openrouter: YOUR_KEY   # https://openrouter.ai (free tier available)
   bytez: YOUR_KEY        # https://bytez.com (free tier available)
 ```
+
+---
+
+## Burp Suite Integration
+
+Import findings directly from Burp Suite XML exports. Aegis parses issues, decodes base64 request/response bodies, and stores them as findings with full evidence.
+
+```bash
+aegis burp import scan.xml              # import all findings
+aegis burp import scan.xml --dry-run    # preview without writing
+aegis burp list                         # list all Burp-imported findings
+```
+
+Via REST API:
+```bash
+curl -X POST http://localhost:8888/api/v1/burp/import \
+  -F "file=@scan.xml" -F "dry_run=false"
+```
+
+---
+
+## CVE Correlation
+
+Auto-link findings to the NVD CVE database using keyword extraction and the NVD API v2. Stores CVSS v3.1 scores and vectors per finding.
+
+```bash
+aegis cve correlate                     # correlate all findings
+aegis cve correlate --session 3         # correlate session findings only
+aegis cve search "sql injection"        # search NVD directly
+aegis cve list --finding 42             # list CVEs for a finding
+```
+
+Add your NVD API key to `config/config.yaml` for higher rate limits:
+```yaml
+api_keys:
+  nvd: YOUR_NVD_API_KEY   # https://nvd.nist.gov/developers/request-an-api-key
+```
+
+---
+
+## SARIF Export
+
+Export findings as SARIF v2.1.0 for native GitHub Code Scanning integration. Includes OWASP references, security-severity scores, and rule metadata.
+
+```bash
+aegis sarif export                          # export all findings
+aegis sarif export --session 3              # export session findings
+aegis sarif export --output results.sarif   # custom output path
+```
+
+Upload to GitHub Code Scanning:
+```bash
+aegis sarif export --output results.sarif
+gh code-scanning upload-sarif --sarif results.sarif
+```
+
+Via REST API:
+```bash
+curl http://localhost:8888/api/v1/sarif/3 -o session3.sarif
+```
+
+---
+
+## Parallel Multi-Target Campaigns
+
+Scan a list of hosts concurrently with configurable parallelism. Each target gets its own scan session.
+
+```bash
+# Create a targets file
+cat > targets.txt << EOF
+example.com
+192.168.1.0/24
+https://api.example.com
+10.0.0.1
+EOF
+
+# Run parallel campaign
+aegis campaign run-parallel mycamp \
+  --targets targets.txt \
+  --max-parallel 5 \
+  --phases recon,vuln
+
+# Dry run to preview
+aegis campaign run-parallel mycamp \
+  --targets targets.txt \
+  --dry-run
+```
+
+---
+
+## Custom Report Templates
+
+Install branded HTML or Markdown templates for client deliverables.
+
+```bash
+aegis template list                          # list built-in + custom templates
+aegis template install report.html --name acme-brand   # install custom template
+aegis template validate report.html          # validate template placeholders
+```
+
+Required template placeholders: `$title`, `$generated_at`, `$findings`
+
+---
+
+## REST API
+
+Headless operation for CI/CD pipelines. Runs on port 8888 by default.
+
+```bash
+aegis api serve                              # start on 127.0.0.1:8888
+aegis api serve --host 0.0.0.0 --port 9000  # custom bind
+```
+
+**Endpoints:**
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/v1/health` | Health check |
+| GET | `/api/v1/findings` | Paginated findings list |
+| GET | `/api/v1/findings/{id}` | Finding detail with notes, tags, CVEs |
+| POST | `/api/v1/findings/{id}/notes` | Add note to finding |
+| GET | `/api/v1/sessions` | List scan sessions |
+| GET | `/api/v1/sessions/{id}/findings` | Session findings |
+| POST | `/api/v1/scan` | Trigger async scan job |
+| GET | `/api/v1/scan/{job_id}` | Scan job status |
+| GET | `/api/v1/report/{target}` | Download report file |
+| POST | `/api/v1/burp/import` | Import Burp XML |
+| GET | `/api/v1/cve/{finding_id}` | CVEs for a finding |
+| GET | `/api/v1/sarif/{session_id}` | SARIF export |
+| GET | `/api/v1/scope` | List scope entries |
+| POST | `/api/v1/scope` | Add scope entry |
+| DELETE | `/api/v1/scope/{id}` | Remove scope entry |
+
+Interactive docs at `http://localhost:8888/docs` (Swagger UI).
+
+Optional API key auth — set `api.key` in `config/config.yaml`.
 
 ---
 
@@ -173,6 +317,12 @@ docker run --rm -it -p 8080:8080 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/config:/app/config \
   aegis serve --host 0.0.0.0
+
+# REST API
+docker run --rm -it -p 8888:8888 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/config:/app/config \
+  aegis api serve --host 0.0.0.0
 ```
 
 ---
@@ -190,6 +340,10 @@ api_keys:
   shodan: CHANGE_ME
   openrouter: CHANGE_ME
   bytez: CHANGE_ME
+  nvd: CHANGE_ME           # https://nvd.nist.gov/developers/request-an-api-key
+
+api:
+  key: ""                  # optional REST API key (leave empty for open access)
 
 notifications:
   slack_webhook: ""
@@ -299,6 +453,58 @@ aegis ai report --target example.com --format html
 aegis ai chat
 ```
 
+### Burp Suite
+
+```bash
+aegis burp import scan.xml
+aegis burp import scan.xml --dry-run
+aegis burp list
+```
+
+### CVE Correlation
+
+```bash
+aegis cve correlate
+aegis cve correlate --session 3
+aegis cve search "sql injection" --max 10
+aegis cve list --finding 42
+```
+
+### SARIF Export
+
+```bash
+aegis sarif export
+aegis sarif export --session 3
+aegis sarif export --output results.sarif
+```
+
+### Campaigns
+
+```bash
+aegis campaign create mycamp --domain example.com
+aegis campaign list
+aegis campaign run mycamp
+aegis campaign run-parallel mycamp --targets targets.txt --max-parallel 5
+aegis campaign add-target mycamp 10.0.0.1 --kind ip
+aegis campaign diff mycamp
+aegis campaign report mycamp
+```
+
+### Templates
+
+```bash
+aegis template list
+aegis template install report.html --name my-brand
+aegis template validate report.html
+```
+
+### REST API
+
+```bash
+aegis api serve
+aegis api serve --host 0.0.0.0 --port 9000
+```
+
 ### Reporting & Export
 
 ```bash
@@ -328,7 +534,35 @@ aegis notify test --channel discord
 
 ```bash
 aegis serve                  # web UI at http://127.0.0.1:8080
+aegis api serve              # REST API at http://127.0.0.1:8888
 aegis interactive            # Textual TUI
+```
+
+---
+
+## CI/CD Integration
+
+Aegis REST API makes it easy to integrate into any CI/CD pipeline.
+
+### GitHub Actions example
+
+```yaml
+- name: Run Aegis scan
+  run: |
+    pip install aegis-cli
+    aegis api serve --host 0.0.0.0 --port 8888 &
+    sleep 2
+    curl -s -X POST http://localhost:8888/api/v1/scan \
+      -H "Content-Type: application/json" \
+      -d '{"target": "${{ env.TARGET }}", "phases": ["recon", "vuln"]}'
+
+- name: Export SARIF
+  run: aegis sarif export --output results.sarif
+
+- name: Upload to GitHub Code Scanning
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: results.sarif
 ```
 
 ---
@@ -351,15 +585,16 @@ aegis recon osint acme.com --emails
 aegis vuln web https://acme.com
 aegis vuln ssl acme.com
 
-# 4. AI triage
+# 4. AI triage + CVE correlation
 aegis ai triage
-aegis ai suggest --target acme.com
+aegis cve correlate
 
 # 5. Annotate
 aegis tag add 1 confirmed
 aegis notes add 1 "Exploitable via unauthenticated endpoint"
 
-# 6. Report
+# 6. Export
+aegis sarif export --output acme.sarif
 aegis report generate acme.com --format pdf --min-severity medium
 
 # 7. Notify
@@ -392,18 +627,11 @@ The suite includes unit tests, property-based tests (Hypothesis), and CLI integr
 
 ## Roadmap
 
-Things that would make Aegis even better — contributions welcome:
-
-- [ ] **Burp Suite integration** — import findings from Burp XML exports
 - [ ] **Metasploit bridge** — trigger MSF modules from the CLI
-- [ ] **CVE correlation** — auto-link findings to CVE database
-- [ ] **Multi-target campaigns** — parallel scans across target lists
-- [ ] **Report templates** — custom branded PDF templates
 - [ ] **Plugin marketplace** — community tool wrappers
-- [ ] **REST API** — headless operation for CI/CD pipelines
-- [ ] **SARIF export** — integrate with GitHub Code Scanning
 - [ ] **Scheduled scans** — cron-based watch mode
 - [ ] **Team collaboration** — shared workspace over network DB
+- [ ] **Nuclei custom templates** — write and run custom Nuclei templates from CLI
 
 ---
 
@@ -412,9 +640,9 @@ Things that would make Aegis even better — contributions welcome:
 - API keys stored in `config/config.yaml` only — never logged or sent in AI prompts
 - `safe_mode: true` prevents accidental out-of-scope scanning
 - All subprocess calls use list form — no `shell=True`, no injection risk
-- Web UI binds to `127.0.0.1` by default
+- Web UI and REST API bind to `127.0.0.1` by default
 - AI prompts contain only finding metadata — never credentials or raw session data
-- Full mypy type checking — zero type errors across 51 source files
+- Full mypy type checking — zero type errors across 58 source files
 
 ---
 

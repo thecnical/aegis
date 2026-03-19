@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use Aegis in your research or security work, please cite it as below."
+type: software
+title: "Aegis — AI-Augmented Offensive Security Platform"
+abstract: >
+  Aegis is a modular CLI platform for the full penetration testing lifecycle.
+  It unifies recon, vulnerability scanning, exploitation, post-exploitation,
+  and reporting behind a single interface with AI-driven autonomous orchestration,
+  Burp Suite XML import, NVD/CVE correlation, SARIF export for GitHub Code Scanning,
+  parallel multi-target campaigns, and a REST API for CI/CD pipelines.
+authors:
+  - family-names: Pandey
+    given-names: Chandan
+    alias: thecnical
+    website: "https://github.com/thecnical"
+repository-code: "https://github.com/thecnical/aegis"
+url: "https://github.com/thecnical/aegis"
+license: MIT
+version: "2.0.0"
+date-released: "2025-01-01"
+keywords:
+  - penetration-testing
+  - offensive-security
+  - security
+  - pentest
+  - recon
+  - reconnaissance
+  - vulnerability-scanner
+  - burp-suite
+  - cve
+  - nvd
+  - sarif
+  - github-code-scanning
+  - nmap
+  - nuclei
+  - sqlmap
+  - red-team
+  - ctf
+  - bug-bounty
+  - web-security
+  - network-security
+  - ai
+  - autonomous
+  - cli
+  - python

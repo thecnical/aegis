@@ -4,20 +4,37 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aegis-cli"
-version = "1.0.0"
-description = "Aegis — Modular Offensive Security Platform"
+version = "2.0.0"
+description = "Aegis — Modular Offensive Security Platform for penetration testing, recon, vulnerability scanning, and reporting"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
   { name = "Chandan Pandey" }
 ]
-keywords = ["security", "pentest", "offensive", "recon", "cli"]
+keywords = [
+  "security", "pentest", "penetration-testing", "offensive-security",
+  "recon", "reconnaissance", "vulnerability-scanner", "cli", "burp-suite",
+  "cve", "sarif", "github-code-scanning", "nmap", "nuclei", "sqlmap",
+  "red-team", "ctf", "bug-bounty", "web-security", "network-security",
+]
 classifiers = [
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: MIT License",
   "Environment :: Console",
   "Topic :: Security",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: System :: Networking",
+  "Topic :: Software Development :: Testing",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: System Administrators",
+  "Development Status :: 4 - Beta",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
 ]
 dependencies = [
   "click>=8.1",
@@ -51,12 +68,16 @@ aegis = "aegis.__main__:cli"
 
 [project.urls]
 Homepage = "https://github.com/thecnical/aegis"
+Documentation = "https://github.com/thecnical/aegis/wiki"
+Source = "https://github.com/thecnical/aegis"
 "Bug Tracker" = "https://github.com/thecnical/aegis/issues"
+Changelog = "https://github.com/thecnical/aegis/releases"
 
 [tool.setuptools]
 include-package-data = true
 packages = [
   "aegis",
+  "aegis.api",
   "aegis.core",
   "aegis.tools",
   "aegis.tools.recon",

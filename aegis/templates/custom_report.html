@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>${title}</title>
+    <style>
+      /* ── Reset & Variables ── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --primary: #1a3a5c;
+        --accent: #c0392b;
+        --text: #2c3e50;
+        --text-light: #7f8c8d;
+        --bg: #ffffff;
+        --bg-alt: #f8f9fa;
+        --border: #dee2e6;
+        --critical: #c0392b;
+        --high: #e67e22;
+        --medium: #f39c12;
+        --low: #27ae60;
+        --info: #2980b9;
+        --font: "Helvetica Neue", Arial, sans-serif;
+      }
+      body { font-family: var(--font); color: var(--text); background: var(--bg); font-size: 11pt; line-height: 1.5; }
+
+      /* ── Cover Page ── */
+      .cover {
+        page-break-after: always;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 80px 60px;
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2137 100%);
+        color: #fff;
+      }
+      .cover .logo { font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 40px; color: #fff; }
+      .cover .logo span { color: #e74c3c; }
+      .cover h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
+      .cover .subtitle { font-size: 1.1rem; color: rgba(255,255,255,0.75); margin-bottom: 40px; }
+      .cover .meta-grid { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; font-size: 0.95rem; }
+      .cover .meta-label { color: rgba(255,255,255,0.55); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+      .cover .meta-value { color: #fff; font-weight: 600; }
+      .cover .classification {
+        margin-top: 60px;
+        padding: 8px 20px;
+        border: 2px solid #e74c3c;
+        color: #e74c3c;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: inline-block;
+      }
+
+      /* ── Page Layout ── */
+      .page { padding: 40px 60px; }
+      @media print {
+        .page { padding: 20px 40px; }
+        .cover { min-height: auto; padding: 60px 40px; }
+      }
+
+      /* ── Typography ── */
+      h1 { font-size: 1.8rem; color: var(--primary); border-bottom: 3px solid var(--accent); padding-bottom: 8px; margin: 32px 0 16px; }
+      h2 { font-size: 1.3rem; color: var(--primary); margin: 24px 0 12px; }
+      h3 { font-size: 1.05rem; color: var(--text); margin: 16px 0 8px; }
+      p { margin-bottom: 12px; }
+      ul, ol { padding-left: 24px; margin-bottom: 12px; }
+      li { margin-bottom: 4px; }
+      a { color: var(--primary); }
+
+      /* ── Severity Badges ── */
+      .badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #fff;
+      }
+      .badge-critical { background: var(--critical); }
+      .badge-high     { background: var(--high); }
+      .badge-medium   { background: var(--medium); color: #333; }
+      .badge-low      { background: var(--low); }
+      .badge-info     { background: var(--info); }
+
+      /* ── Executive Summary ── */
+      .exec-summary {
+        background: var(--bg-alt);
+        border-left: 4px solid var(--primary);
+        padding: 20px 24px;
+        margin: 16px 0 24px;
+        border-radius: 0 4px 4px 0;
+      }
+
+      /* ── Risk Summary Table ── */
+      .risk-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+      .risk-table th {
+        background: var(--primary);
+        color: #fff;
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .risk-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+      .risk-table tr:nth-child(even) td { background: var(--bg-alt); }
+
+      /* ── Findings ── */
+      .finding-card {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        page-break-inside: avoid;
+      }
+      .finding-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--bg-alt);
+        border-bottom: 1px solid var(--border);
+      }
+      .finding-title { font-weight: 700; font-size: 1rem; flex: 1; }
+      .finding-body { padding: 16px; }
+      .finding-body p { font-size: 0.9rem; }
+      .finding-meta { display: flex; gap: 20px; font-size: 0.8rem; color: var(--text-light); margin-top: 8px; }
+
+      /* ── Evidence ── */
+      .evidence-block {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        font-family: "Courier New", monospace;
+        font-size: 0.78rem;
+        padding: 12px 16px;
+        border-radius: 4px;
+        overflow-x: auto;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      /* ── Remediation ── */
+      .remediation {
+        background: #eafaf1;
+        border-left: 4px solid var(--low);
+        padding: 12px 16px;
+        margin-top: 12px;
+        border-radius: 0 4px 4px 0;
+        font-size: 0.88rem;
+      }
+
+      /* ── Footer ── */
+      .footer {
+        margin-top: 60px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        font-size: 0.78rem;
+        color: var(--text-light);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      /* ── Page breaks ── */
+      .page-break { page-break-after: always; }
+    </style>
+  </head>
+  <body>
+
+    <!-- Cover Page -->
+    <div class="cover">
+      <div class="logo">${brand}</div>
+      <h1>Penetration Test Report</h1>
+      <div class="subtitle">${title}</div>
+      <div class="meta-grid">
+        <span class="meta-label">Generated</span>
+        <span class="meta-value">${generated_at}</span>
+        <span class="meta-label">Assessor</span>
+        <span class="meta-value">${brand}</span>
+      </div>
+      <div class="classification">Confidential</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="page">
+
+      <h1>Executive Summary</h1>
+      <div class="exec-summary">
+        ${summary}
+      </div>
+
+      <h1>Risk Summary</h1>
+      ${risk_summary}
+
+      <h1>Top Critical Findings</h1>
+      ${top_criticals}
+
+      <div class="page-break"></div>
+
+      <h1>Hosts &amp; Infrastructure</h1>
+      ${hosts}
+      ${ports}
+      ${services}
+
+      <div class="page-break"></div>
+
+      <h1>Vulnerabilities</h1>
+      ${vulns}
+
+      <div class="page-break"></div>
+
+      <h1>Findings</h1>
+      ${findings}
+
+      ${custom_sections}
+
+      <div class="footer">
+        <span>${brand} — Confidential</span>
+        <span>Generated: ${generated_at}</span>
+      </div>
+
+    </div>
+  </body>
+</html>

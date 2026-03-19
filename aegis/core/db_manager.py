@@ -210,6 +210,52 @@ class DatabaseManager:
             "session_id INTEGER",
         ]:
             self._add_column_if_missing(cursor, "findings", col_def)
+
+        # CVE correlations table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cve_correlations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                finding_id INTEGER NOT NULL,
+                cve_id TEXT NOT NULL,
+                description TEXT,
+                cvss_score REAL,
+                cvss_vector TEXT,
+                severity TEXT,
+                published TEXT,
+                url TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (finding_id) REFERENCES findings(id)
+            );
+            """
+        )
+
+        # Campaign targets table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS campaign_targets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_name TEXT NOT NULL,
+                target TEXT NOT NULL,
+                kind TEXT NOT NULL DEFAULT 'domain',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            """
+        )
+
+        # API tokens table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS api_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                token TEXT UNIQUE NOT NULL,
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_used DATETIME
+            );
+            """
+        )
+
         conn.commit()
 
     def upsert_target(self, name: str) -> int:
@@ -477,3 +523,114 @@ class DatabaseManager:
             (session_id,),
         )
         return [dict(row) for row in cursor.fetchall()]
+
+    def get_all_findings(self, limit: int = 500, offset: int = 0) -> list[dict]:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM findings ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_finding(self, finding_id: int) -> Optional[dict]:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM findings WHERE id = ?", (finding_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def get_evidence(self, finding_id: int) -> list[dict]:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM evidence WHERE finding_id = ? ORDER BY created_at ASC",
+            (finding_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    # ------------------------------------------------------------------
+    # CVE correlations
+    # ------------------------------------------------------------------
+
+    def add_cve_correlation(
+        self,
+        finding_id: int,
+        cve_id: str,
+        description: str,
+        cvss_score: Optional[float],
+        cvss_vector: Optional[str],
+        severity: str,
+        published: str,
+        url: str,
+    ) -> int:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO cve_correlations
+                (finding_id, cve_id, description, cvss_score, cvss_vector, severity, published, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (finding_id, cve_id, description, cvss_score, cvss_vector, severity, published, url),
+        )
+        conn.commit()
+        return self._last_insert_id(cursor)
+
+    def get_cve_correlations(self, finding_id: int) -> list[dict]:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM cve_correlations WHERE finding_id = ? ORDER BY cvss_score DESC",
+            (finding_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    # ------------------------------------------------------------------
+    # Campaign targets
+    # ------------------------------------------------------------------
+
+    def add_campaign_target(self, campaign_name: str, target: str, kind: str) -> int:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO campaign_targets (campaign_name, target, kind) VALUES (?, ?, ?)",
+            (campaign_name, target, kind),
+        )
+        conn.commit()
+        return self._last_insert_id(cursor)
+
+    def get_campaign_targets(self, campaign_name: str) -> list[dict]:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM campaign_targets WHERE campaign_name = ? ORDER BY id ASC",
+            (campaign_name,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    # ------------------------------------------------------------------
+    # Scope helpers (for REST API)
+    # ------------------------------------------------------------------
+
+    def get_scope_entries(self) -> list[dict]:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM scope ORDER BY id ASC")
+        return [dict(row) for row in cursor.fetchall()]
+
+    def remove_scope_entry(self, entry_id: int) -> None:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM scope WHERE id = ?", (entry_id,))
+        conn.commit()
+
+    def add_scope_entry(self, target: str, kind: str) -> int:
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO scope (target, kind, workspace_id) VALUES (?, ?, ?)",
+            (target, kind, None),
+        )
+        conn.commit()
+        return self._last_insert_id(cursor)
