@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from html import escape
 from importlib import resources
@@ -10,6 +11,57 @@ from typing import Dict, List, Optional
 SEVERITY_RANK: Dict[str, int] = {
     "info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4
 }
+
+
+def _build_attack_graph(
+    hosts: List[dict],
+    findings: List[dict],
+    vulns: List[dict],
+) -> str:
+    """Build a D3-compatible JSON graph from hosts and findings."""
+    nodes: List[dict] = []
+    links: List[dict] = []
+    seen_ids: set[str] = set()
+
+    for h in hosts:
+        nid = f"host-{h.get('id', h.get('ip', 'unknown'))}"
+        if nid not in seen_ids:
+            nodes.append({"id": nid, "label": h.get("hostname") or h.get("ip") or "host", "type": "host"})
+            seen_ids.add(nid)
+
+    for f in findings:
+        nid = f"finding-{f.get('id', id(f))}"
+        sev = str(f.get("severity") or "info").lower()
+        label = str(f.get("title") or "finding")[:40]
+        if nid not in seen_ids:
+            nodes.append({"id": nid, "label": label, "type": "finding", "severity": sev})
+            seen_ids.add(nid)
+        # Link to host if host_id is set
+        host_id = f.get("host_id")
+        if host_id:
+            src = f"host-{host_id}"
+            if src in seen_ids:
+                links.append({"source": src, "target": nid})
+        elif nodes:
+            # Link to first host as fallback
+            links.append({"source": nodes[0]["id"], "target": nid})
+
+    for v in vulns:
+        nid = f"vuln-{v.get('id', id(v))}"
+        sev = str(v.get("severity") or "medium").lower()
+        label = str(v.get("name") or "vuln")[:40]
+        if nid not in seen_ids:
+            nodes.append({"id": nid, "label": label, "type": "finding", "severity": sev})
+            seen_ids.add(nid)
+        host_id = v.get("host_id")
+        if host_id:
+            src = f"host-{host_id}"
+            if src in seen_ids:
+                links.append({"source": src, "target": nid})
+        elif nodes:
+            links.append({"source": nodes[0]["id"], "target": nid})
+
+    return json.dumps({"nodes": nodes, "links": links})
 
 
 def _filter_by_severity(items: List[dict], min_severity: Optional[str]) -> List[dict]:
@@ -198,6 +250,7 @@ def render_report_html(
 
     template_text = _load_html_template(template_path)
     tmpl = Template(template_text)
+    attack_graph = _build_attack_graph(data["hosts"], ff, fv)
     return tmpl.safe_substitute(
         title=f"Aegis Report: {target}",
         generated_at=datetime.utcnow().isoformat(),
@@ -216,4 +269,5 @@ def render_report_html(
         risk_summary=_format_html_section("Risk Summary", risk_summary),
         top_criticals=_format_html_section("Top Criticals", criticals[:10]),
         custom_sections="\n".join(custom_blocks),
+        attack_graph_json=attack_graph,
     )

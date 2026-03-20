@@ -175,6 +175,51 @@ class AIOrchestrator:
         self._findings.append(finding)
         self._phase_summaries.setdefault(phase, []).append(finding)
 
+    def _generate_ai_payloads(self, tech_stack: list[str]) -> None:
+        """Ask the AI to generate targeted payloads based on detected tech stack."""
+        if not tech_stack:
+            return
+        stack_str = ", ".join(tech_stack[:10])
+        prompt = (
+            f"Target is running: {stack_str}.\n"
+            f"Target host: {self.target}\n\n"
+            "Generate 5 targeted attack payloads for this tech stack. "
+            "For each payload include: type (sqli/xss/ssrf/lfi/rce), "
+            "the payload string, and where to inject it. "
+            "Reply as a JSON array: "
+            '[{"type":"...","payload":"...","inject_at":"..."}]'
+        )
+        try:
+            response = self._ai.complete(prompt, "suggest")
+            start = response.find("[")
+            end = response.rfind("]") + 1
+            if start >= 0 and end > start:
+                payloads = json.loads(response[start:end])
+                for p in payloads:
+                    if not isinstance(p, dict):
+                        continue
+                    self.db.add_finding(
+                        target_id=None, host_id=None, port_id=None,
+                        title=f"AI Payload: {p.get('type', 'unknown')}",
+                        severity="medium",
+                        category="ai-payload",
+                        description=(
+                            f"Payload: {p.get('payload', '')}\n"
+                            f"Inject at: {p.get('inject_at', '')}\n"
+                            f"Tech stack: {stack_str}"
+                        ),
+                        source="ai-orchestrator",
+                    )
+                    self._findings.append({
+                        "title": f"AI Payload: {p.get('type', 'unknown')}",
+                        "severity": "medium",
+                        "category": "ai-payload",
+                        "source": "ai-orchestrator",
+                    })
+                console.print(f"[accent]AI generated {len(payloads)} targeted payloads.[/accent]")
+        except Exception:
+            pass  # payload generation is best-effort
+
     def _run_phase(self, phase: str, progress: Progress) -> None:
         """Execute all tools for a phase."""
         if phase == "reporting":
@@ -186,6 +231,14 @@ class AIOrchestrator:
             progress.remove_task(task_id)
             if output:
                 self._store_findings(phase, output, tool_name)
+
+        # After recon phase: generate AI payloads based on tech detection findings
+        if phase == "recon":
+            tech_findings = [
+                f for f in self._findings if f.get("category") == "recon"
+            ]
+            tech_stack = [f.get("title", "") for f in tech_findings]
+            self._generate_ai_payloads(tech_stack)
 
     def _generate_report(self) -> str:
         """Generate final report and return file path."""

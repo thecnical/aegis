@@ -51,6 +51,7 @@ dependencies = [
   "weasyprint>=62.0",
   "cvss>=3.0",
   "questionary>=2.0",
+  "webtech>=1.2",
 ]
 
 [project.optional-dependencies]
@@ -63,9 +64,13 @@ dev = [
   "types-requests>=2.31",
   "types-PyYAML>=6.0",
 ]
+mcp = [
+  "mcp>=1.0",
+]
 
 [project.scripts]
 aegis = "aegis.__main__:cli"
+aegis-mcp = "aegis.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/thecnical/aegis"

@@ -79,6 +79,11 @@ Aegis is built around four layers that work together:
 | Feature | How it works |
 |---|---|
 | **AI Autonomous Mode** | `AIOrchestrator` runs all phases sequentially, uses the AI client to select tools per phase based on accumulated findings, generates a final report |
+| **AI Payload Generation** | After recon, the AI generates targeted payloads (SQLi, XSS, SSRF, LFI, RCE) based on the detected tech stack — stored as findings |
+| **JS Secret Extraction** | `trufflehog` scans JS files, git repos, and local paths for exposed API keys, tokens, and credentials |
+| **Screenshot Capture** | `gowitness` screenshots all discovered web services; images saved to `data/screenshots/` and linked in reports |
+| **Attack Path Graph** | HTML reports include an interactive D3.js force-directed graph showing hosts → findings → severity chains |
+| **MCP Server** | Exposes Aegis as an MCP tool server — AI agents (Claude, Cursor) can drive full pentests autonomously |
 | **Burp Suite Import** | Parses Burp XML exports with defusedxml (XXE-safe), decodes base64 request/response bodies, stores findings + HTTP evidence in the DB |
 | **CVE Correlation** | Extracts keywords from finding titles, queries NVD API v2, stores CVSS v3.1 scores and vectors per finding, respects rate limits |
 | **SARIF Export** | Generates SARIF v2.1.0 with per-finding rule IDs, OWASP reference URIs, and GitHub security-severity scores |
@@ -333,6 +338,125 @@ sudo apt install whatweb   # already on Kali
 ```
 
 > Wappalyzer was removed — its CLI requires a paid subscription. `webtech` and `whatweb` are fully free and cover the same use case.
+
+---
+
+## JS Secret Extraction
+
+Scan any local path or git repo for exposed API keys, tokens, and credentials using [trufflehog](https://github.com/trufflesecurity/trufflehog) (free, Apache 2.0).
+
+**Install trufflehog:**
+```bash
+go install github.com/trufflesecurity/trufflehog/v3@latest
+```
+
+**Usage:**
+```bash
+# Scan a local directory (e.g. a cloned JS app)
+aegis recon secrets /path/to/project
+
+# Scan a git repo directly
+aegis recon secrets https://github.com/target/repo --mode git
+
+# Output as JSON
+aegis recon secrets /path/to/project --json
+```
+
+All detected secrets are stored as `high` severity findings in the workspace database.
+
+---
+
+## Screenshot Capture
+
+Auto-screenshot all discovered web services using [gowitness](https://github.com/sensepost/gowitness) (free, GPL).
+
+**Install gowitness:**
+```bash
+go install github.com/sensepost/gowitness@latest
+```
+
+**Usage:**
+```bash
+# Screenshot a single URL
+aegis recon screenshot example.com
+
+# Screenshot all hosts already in the workspace DB
+aegis recon screenshot . --from-db
+
+# Custom output directory
+aegis recon screenshot example.com --out-dir data/screenshots
+```
+
+Screenshots are saved as `.png` files in `data/screenshots/` and stored as findings in the database. HTML reports automatically reference them.
+
+---
+
+## AI Payload Generation
+
+After every recon phase, Aegis automatically asks the AI to generate targeted attack payloads based on the detected tech stack. Uses your existing free OpenRouter or Bytez API key — no extra cost.
+
+This happens automatically during `aegis ai auto`. The AI generates payloads for SQLi, XSS, SSRF, LFI, and RCE based on what was found (e.g. WordPress + PHP + MySQL → targeted WordPress SQLi payloads). All payloads are stored as `medium` severity findings with category `ai-payload`.
+
+---
+
+## Attack Path Graph
+
+HTML reports (`--format html`) now include an interactive D3.js force-directed graph showing the attack surface:
+
+- Blue nodes = hosts
+- Colored nodes = findings (red=critical, orange=high, yellow=medium, blue=info)
+- Edges = relationships between hosts and findings
+
+```bash
+aegis report generate example.com --format html
+# Open data/reports/example.com.html in a browser
+```
+
+No extra dependencies — D3.js loads from CDN.
+
+---
+
+## MCP Server (AI Agent Integration)
+
+Aegis can run as an [MCP](https://modelcontextprotocol.io) server, letting AI agents like Claude or Cursor drive full pentests autonomously.
+
+**Install the MCP SDK:**
+```bash
+pip install mcp
+# or: pip install "aegis-cli[mcp]"
+```
+
+**Run the server:**
+```bash
+aegis-mcp
+# or: python -m aegis.mcp_server
+```
+
+**Add to Claude / Cursor MCP config:**
+```json
+{
+  "mcpServers": {
+    "aegis": {
+      "command": "python",
+      "args": ["-m", "aegis.mcp_server"]
+    }
+  }
+}
+```
+
+**Available MCP tools:**
+
+| Tool | What it does |
+|---|---|
+| `aegis_recon_domain` | Subdomain enum + Shodan + tech detection |
+| `aegis_vuln_web` | Nuclei web vulnerability scan |
+| `aegis_ai_auto` | Full autonomous pentest |
+| `aegis_get_findings` | Query findings from the DB |
+| `aegis_generate_report` | Generate a report |
+| `aegis_scope_add` | Add a target to scope |
+| `aegis_secrets_scan` | Scan for exposed secrets |
+
+Once configured, you can tell Claude: *"Run a full pentest on example.com and generate an HTML report"* — and it will drive Aegis end-to-end.
 
 ---
 

@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>${title}</title>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
     <style>
       :root { color-scheme: dark; }
       body { font-family: "Courier New", monospace; background: #0b0f0e; color: #e2f5e9; margin: 0; padding: 24px; }
@@ -13,6 +14,17 @@
       ul { padding-left: 20px; }
       li { margin-bottom: 6px; }
       .badge { display: inline-block; padding: 2px 8px; border: 1px solid #2d5a44; margin-right: 6px; }
+      /* Attack graph */
+      #attack-graph { width: 100%; height: 480px; background: #080d0b; border: 1px solid #1d3b2d; }
+      .node circle { stroke: #35ff9e; stroke-width: 1.5px; }
+      .node text { fill: #e2f5e9; font-size: 11px; font-family: monospace; }
+      .link { stroke: #2d5a44; stroke-opacity: 0.7; }
+      .node.host circle   { fill: #0d3b2d; }
+      .node.finding circle { fill: #3b1a0d; }
+      .node.critical circle { fill: #5a0d0d; stroke: #ff4444; }
+      .node.high circle   { fill: #3b1a0d; stroke: #ff8800; }
+      .node.medium circle { fill: #2d2d0d; stroke: #ffcc00; }
+      .node.info circle   { fill: #0d1a3b; stroke: #4488ff; }
     </style>
   </head>
   <body>
@@ -29,6 +41,58 @@
     <div class="panel">${findings}</div>
     <div class="panel">${risk_summary}</div>
     <div class="panel">${top_criticals}</div>
+
+    <!-- Attack Path Graph -->
+    <div class="panel">
+      <h2>Attack Path Graph</h2>
+      <svg id="attack-graph"></svg>
+    </div>
+
     <div class="panel">${custom_sections}</div>
+
+    <script>
+    (function() {
+      const graphData = ${attack_graph_json};
+      if (!graphData || !graphData.nodes || graphData.nodes.length === 0) return;
+
+      const svg = d3.select("#attack-graph");
+      const width = svg.node().getBoundingClientRect().width || 900;
+      const height = 480;
+      svg.attr("viewBox", [0, 0, width, height]);
+
+      const sim = d3.forceSimulation(graphData.nodes)
+        .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-200))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      const link = svg.append("g")
+        .selectAll("line")
+        .data(graphData.links)
+        .join("line")
+        .attr("class", "link")
+        .attr("stroke-width", 1.5);
+
+      const node = svg.append("g")
+        .selectAll("g")
+        .data(graphData.nodes)
+        .join("g")
+        .attr("class", d => `node ${d.type} ${d.severity || ""}`)
+        .call(d3.drag()
+          .on("start", (event, d) => { if (!event.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+          .on("drag",  (event, d) => { d.fx = event.x; d.fy = event.y; })
+          .on("end",   (event, d) => { if (!event.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+        );
+
+      node.append("circle").attr("r", d => d.type === "host" ? 14 : 9);
+      node.append("title").text(d => d.label);
+      node.append("text").attr("dy", "0.35em").attr("x", d => d.type === "host" ? 18 : 13).text(d => d.label.slice(0, 24));
+
+      sim.on("tick", () => {
+        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+      });
+    })();
+    </script>
   </body>
 </html>
