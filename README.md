@@ -102,13 +102,43 @@ Aegis is built around four layers that work together:
 
 ## Installation
 
-### Requirements
+### Option 1 — One-command full install (recommended for Kali Linux)
 
-- Python 3.10 or newer
-- pip
-- Git
+This installs **everything**: apt packages, Go, Rust, subfinder, nuclei, trufflehog, gowitness, amass, feroxbuster, webtech, and Aegis itself. Requires root.
 
-### Kali Linux — step-by-step
+```bash
+# Clone the repo first
+git clone https://github.com/thecnical/aegis.git
+cd aegis
+
+# Then run the one-command installer
+sudo bash install.sh
+```
+
+Or, if you already have Aegis installed:
+
+```bash
+sudo aegis bootstrap --yes
+```
+
+Preview what will be installed without making changes:
+
+```bash
+sudo bash install.sh --dry-run
+# or
+aegis bootstrap --dry-run
+```
+
+After install, open a new terminal and run:
+
+```bash
+aegis doctor
+aegis ai auto --target <host>
+```
+
+---
+
+### Option 2 — Manual step-by-step (Kali Linux)
 
 **Step 1 — System dependencies**
 
@@ -140,22 +170,20 @@ pip install -e .
 
 ```bash
 mkdir -p data/logs
-# Edit config/config.yaml and add your API keys
-nano config/config.yaml
+nano config/config.yaml   # add your free API keys
 aegis doctor
 ```
 
-**Step 5 — Install external tools (optional)**
+**Step 5 — Install external tools**
 
 ```bash
-# Interactive — pick which tools to install
-aegis install-tools
-
-# Or install everything at once
+# Install everything automatically
 aegis install-tools --yes
 ```
 
-### From PyPI
+---
+
+### Option 3 — From PyPI
 
 ```bash
 pip install aegis-cli
@@ -170,11 +198,9 @@ pip install -e ".[dev]"
 ### First-time setup
 
 ```bash
-# Edit config/config.yaml — add your API keys
-aegis doctor
+aegis doctor          # check tools and API keys
+aegis doctor --fix    # auto-detect tool paths and write to config
 ```
-
-`aegis doctor` checks which external tools are installed and which API keys are configured. Run `aegis doctor --fix` to auto-detect tool paths and write them to config.
 
 ---
 

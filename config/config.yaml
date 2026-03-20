@@ -93,5 +93,9 @@ external_tools:
   theHarvester: "theHarvester"
   # Screenshots
   gowitness: "gowitness"
+  # Secret scanning
+  trufflehog: "trufflehog"
+  # OSINT / subdomain enumeration
+  amass: "amass"
   # Git
   git: "git"

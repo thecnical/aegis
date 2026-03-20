@@ -697,6 +697,39 @@ def run_pipeline(ctx: click.Context, domain: Optional[str], cidr: Optional[str],
 
 # ─── setup / update ───────────────────────────────────────────────────────────
 
+@cli.command("bootstrap")
+@click.option("--yes", "assume_yes", is_flag=True, help="Skip confirmation and install everything.")
+@click.option("--dry-run", is_flag=True, help="Show what would be installed without doing it.")
+@click.option("--skip-rust", is_flag=True, help="Skip Rust/Cargo installation (skips feroxbuster).")
+@pass_context
+def bootstrap_cmd(ctx: AegisContext, assume_yes: bool, dry_run: bool, skip_rust: bool) -> None:
+    """One command to install ALL tools and dependencies. Requires root (sudo).
+
+    Installs: apt packages, Go, Rust, subfinder, nuclei, trufflehog,
+    gowitness, amass, feroxbuster, webtech, mcp, and sets up PATH.
+    """
+    from aegis.core.bootstrap import run_bootstrap
+
+    if not dry_run and not assume_yes:
+        console.print(
+            "[bold yellow]This will install all Aegis dependencies system-wide.[/bold yellow]\n"
+            "It requires [bold]root/sudo[/bold] privileges.\n"
+        )
+        try:
+            answer = input("Continue? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[warning]Aborted.[/warning]")
+            return
+        if answer not in ("y", "yes"):
+            console.print("[warning]Bootstrap cancelled.[/warning]")
+            return
+
+    summary = run_bootstrap(dry_run=dry_run, skip_rust=skip_rust)
+
+    if ctx.json_out:
+        emit_json({"bootstrap": summary}, ctx.json_output)
+
+
 @cli.command("setup")
 @click.option("--yes", "assume_yes", is_flag=True)
 @click.option("--dry-run", is_flag=True)
