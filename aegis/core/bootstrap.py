@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from aegis.core.ui import console
-from aegis.core.utils import ensure_dir, run_command, which
+from aegis.core.utils import ensure_dir, which
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 

@@ -102,14 +102,14 @@ def cli(
             tmp_path = f.name
 
         console.print(f"[accent]Screenshotting {len(urls)} URLs from DB...[/accent]")
-        ok = _run_gowitness_file(tmp_path, out_dir, timeout)
+        _run_gowitness_file(tmp_path, out_dir, timeout)
         Path(tmp_path).unlink(missing_ok=True)
     else:
         # Single target
         from aegis.core.utils import ensure_url
         url = ensure_url(target)
         console.print(f"[accent]Screenshotting:[/accent] {url}")
-        ok = _run_gowitness_single(url, out_dir, timeout)
+        _run_gowitness_single(url, out_dir, timeout)
 
     # Collect generated screenshots
     shot_dir = Path(out_dir)
