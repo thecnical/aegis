@@ -102,15 +102,52 @@ Aegis is built around four layers that work together:
 - pip
 - Git
 
-### From source (recommended)
+### Kali Linux — step-by-step
+
+**Step 1 — System dependencies**
+
+```bash
+sudo apt update
+sudo apt install -y python3-pip python3-venv git \
+  libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 \
+  libcairo2 libffi-dev libgdk-pixbuf-2.0-0
+```
+
+> Note: the correct package name on modern Kali is `libgdk-pixbuf-2.0-0` (not `libgdk-pixbuf2.0-0`).
+
+**Step 2 — Clone and set up a virtual environment**
 
 ```bash
 git clone https://github.com/thecnical/aegis.git
 cd aegis
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Step 3 — Install Aegis**
+
+```bash
 pip install -e .
 ```
 
-This installs the `aegis` command globally. The `-e` flag means edits to the source are reflected immediately without reinstalling.
+**Step 4 — Set up config and verify**
+
+```bash
+mkdir -p data/logs
+# Edit config/config.yaml and add your API keys
+nano config/config.yaml
+aegis doctor
+```
+
+**Step 5 — Install external tools (optional)**
+
+```bash
+# Interactive — pick which tools to install
+aegis install-tools
+
+# Or install everything at once
+aegis install-tools --yes
+```
 
 ### From PyPI
 
@@ -124,12 +161,9 @@ pip install aegis-cli
 pip install -e ".[dev]"
 ```
 
-This adds pytest, hypothesis, ruff, mypy, and type stubs for local development and testing.
-
 ### First-time setup
 
 ```bash
-cp config/config.yaml.example config/config.yaml
 # Edit config/config.yaml — add your API keys
 aegis doctor
 ```
@@ -271,6 +305,36 @@ aegis recon osint example.com --emails --github-dorks
 
 ---
 
+## Technology Detection
+
+`aegis recon domain` automatically detects web technologies on the target. Aegis uses **free, open-source tools** — no paid API key required.
+
+| Tool | How to install | Notes |
+|---|---|---|
+| **webtech** | `pip install webtech` | Python-based, fingerprints via headers/HTML/cookies |
+| **whatweb** | `sudo apt install whatweb` | Pre-installed on Kali Linux |
+
+Aegis tries `webtech` first, then falls back to `whatweb` automatically. If neither is installed, it prints a hint and continues without crashing.
+
+```bash
+# Tech detection runs automatically with domain recon
+aegis recon domain example.com
+
+# Skip tech detection if you don't need it
+aegis recon domain example.com --no-techdetect
+```
+
+To install both tools at once:
+
+```bash
+pip install webtech
+sudo apt install whatweb   # already on Kali
+```
+
+> Wappalyzer was removed — its CLI requires a paid subscription. `webtech` and `whatweb` are fully free and cover the same use case.
+
+---
+
 ## Vulnerability Scanning
 
 Vulnerability scanning commands actively probe targets for weaknesses. They build on recon data already in the database.
@@ -289,4 +353,30 @@ aegis vuln ssl example.com --port 443
 aegis vuln api https://api.example.com --wordlist data/wordlists/api.txt
 ```
 
-**Nuclei integration:** `aegis vuln web` runs Nuclei with the configured rate limit and parses its JSON-lines output. Each finding includes the template ID, severity
+**Nuclei integration:** `aegis vuln web` runs Nuclei with the configured rate limit and parses its JSON-lines output. Each finding includes the template ID, severity, and matched URL, stored directly in the workspace database.
+
+---
+
+## Uninstalling Aegis
+
+```bash
+# Preview what will be removed (safe — makes no changes)
+aegis uninstall --dry-run
+
+# Remove Aegis and its installed tools
+aegis uninstall --yes
+
+# Also delete databases, reports, and logs
+aegis uninstall --yes --remove-data
+
+# Full clean — remove everything including config
+aegis uninstall --yes --remove-data --remove-config
+```
+
+What `aegis uninstall` removes:
+- The `aegis-cli` Python package
+- `webtech` pip package
+- Go-installed binaries (`subfinder`, `nuclei`) from `~/go/bin/`
+- `feroxbuster` via `cargo uninstall`
+
+It does **not** remove system packages installed via `apt` (nmap, sqlmap, etc.) — those are managed by your system package manager.

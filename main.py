@@ -756,6 +756,54 @@ def install_tools_cmd(ctx: AegisContext, assume_yes: bool, dry_run: bool, includ
         emit_json({"install_tools": results}, ctx.json_output)
 
 
+@cli.command("uninstall")
+@click.option("--remove-data", is_flag=True, help="Also delete the data/ directory (databases, reports, logs).")
+@click.option("--remove-config", is_flag=True, help="Also delete config/config.yaml.")
+@click.option("--yes", "assume_yes", is_flag=True, help="Skip confirmation prompt.")
+@click.option("--dry-run", is_flag=True, help="Show what would be removed without doing it.")
+@pass_context
+def uninstall_cmd(ctx: AegisContext, remove_data: bool, remove_config: bool, assume_yes: bool, dry_run: bool) -> None:
+    """Uninstall Aegis and its installed tools from the system."""
+    from aegis.core.installer import run_uninstall
+
+    if not dry_run and not assume_yes:
+        console.print("[bold red]This will remove Aegis and its installed tools.[/bold red]")
+        if remove_data:
+            console.print("[bold red]  -- data/ directory will be deleted (all databases and reports)[/bold red]")
+        if remove_config:
+            console.print("[bold red]  -- config/config.yaml will be deleted[/bold red]")
+        try:
+            answer = input("Continue? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[warning]Aborted.[/warning]")
+            return
+        if answer not in ("y", "yes"):
+            console.print("[warning]Uninstall cancelled.[/warning]")
+            return
+
+    results = run_uninstall(
+        remove_data=remove_data,
+        remove_config=remove_config,
+        dry_run=dry_run,
+    )
+
+    from rich.table import Table as RichTable
+    table = RichTable(title="Uninstall Summary")
+    table.add_column("Component", style="cyan")
+    table.add_column("Outcome", style="green")
+    outcome_styles = {"ok": "green", "skipped": "yellow", "failed": "red", "dry-run": "blue"}
+    for name, outcome in results.items():
+        style = outcome_styles.get(outcome, "white")
+        table.add_row(name, f"[{style}]{outcome}[/{style}]")
+    console.print(table)
+
+    if not dry_run:
+        console.print("[primary]Aegis uninstalled. Goodbye.[/primary]")
+
+    if ctx.json_out:
+        emit_json({"uninstall": results}, ctx.json_output)
+
+
 @cli.command("update")
 @click.option("--nuclei", "nuclei_update", is_flag=True)
 @click.option("--wordlists", is_flag=True)

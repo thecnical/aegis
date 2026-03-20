@@ -29,7 +29,6 @@ general:
 # Replace CHANGE_ME with your actual keys.
 api_keys:
   shodan: "CHANGE_ME"
-  wappalyzer: "CHANGE_ME"
   openrouter: "CHANGE_ME"   # https://openrouter.ai/keys  (free tier available)
   bytez: "CHANGE_ME"        # https://bytez.com           (free tier available)
 
@@ -86,7 +85,11 @@ external_tools:
   winpeas: "winpeas.exe"
   # OSINT / Passive
   shodan: "shodan"
-  wappalyzer: "wappalyzer"
+  # Tech detection (free alternatives — no API key required)
+  # webtech: pip install webtech
+  # whatweb: sudo apt install whatweb  (pre-installed on Kali)
+  webtech: "webtech"
+  whatweb: "whatweb"
   theHarvester: "theHarvester"
   # Screenshots
   gowitness: "gowitness"

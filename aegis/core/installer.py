@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import shutil
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -39,20 +41,14 @@ def build_install_plan(include_peas: bool = False) -> List[Tuple[str, List[str]]
         (
             "apt-core",
             [
-                "sudo",
-                "apt",
-                "install",
-                "-y",
-                "nmap",
-                "smbclient",
-                "netcat-openbsd",
-                "hydra",
-                "sqlmap",
-                "git",
-                "golang",
-                "cargo",
-                "npm",
-                "curl",
+                "sudo", "apt", "install", "-y",
+                "nmap", "smbclient", "netcat-openbsd", "hydra", "sqlmap",
+                "git", "golang", "cargo", "npm", "curl",
+                # WeasyPrint native deps — package names for Kali/Debian/Ubuntu
+                "libpango-1.0-0", "libpangoft2-1.0-0", "libpangocairo-1.0-0",
+                "libcairo2", "libffi-dev",
+                # libgdk-pixbuf was split; use the correct name on modern Kali
+                "libgdk-pixbuf-2.0-0",
             ],
         )
     )
@@ -69,7 +65,10 @@ def build_install_plan(include_peas: bool = False) -> List[Tuple[str, List[str]]
         )
     )
     plan.append(("feroxbuster", ["cargo", "install", "feroxbuster"]))
-    plan.append(("wappalyzer", ["npm", "install", "-g", "wappalyzer"]))
+    # webtech: free CLI tech-fingerprinting tool (replaces paid Wappalyzer API)
+    plan.append(("webtech", ["pip", "install", "webtech"]))
+    # whatweb: pre-installed on Kali; also available via apt
+    plan.append(("whatweb-apt", ["sudo", "apt", "install", "-y", "whatweb"]))
     if include_peas:
         ensure_dir("data/tools")
         plan.append(
@@ -133,7 +132,7 @@ _PREREQS: Dict[str, str] = {
     "subfinder": "go",
     "nuclei": "go",
     "feroxbuster": "cargo",
-    "wappalyzer": "npm",
+    "webtech": "pip",
 }
 
 
@@ -192,5 +191,71 @@ def run_install_plan_interactive(
         else:
             console.print(f"[primary]{name}[/primary]: ok")
             results[name] = "ok"
+
+    return results
+
+
+# ─── Uninstall ────────────────────────────────────────────────────────────────
+
+def build_uninstall_plan() -> List[Tuple[str, List[str]]]:
+    """Return the list of (name, command) steps to remove Aegis and its tools."""
+    plan: List[Tuple[str, List[str]]] = []
+    # Remove the aegis-cli Python package
+    plan.append(("aegis-cli", [sys.executable, "-m", "pip", "uninstall", "-y", "aegis-cli"]))
+    # Remove pip-installed tech detection tool
+    plan.append(("webtech", [sys.executable, "-m", "pip", "uninstall", "-y", "webtech"]))
+    # Remove Go-installed binaries
+    for tool in ("subfinder", "nuclei"):
+        bin_path = Path.home() / "go" / "bin" / tool
+        plan.append((tool, ["rm", "-f", str(bin_path)]))
+    # Remove cargo-installed feroxbuster
+    plan.append(("feroxbuster", ["cargo", "uninstall", "feroxbuster"]))
+    return plan
+
+
+def run_uninstall(
+    remove_data: bool = False,
+    remove_config: bool = False,
+    dry_run: bool = False,
+) -> Dict[str, str]:
+    """Uninstall Aegis and optionally wipe data/config directories."""
+    results: Dict[str, str] = {}
+    plan = build_uninstall_plan()
+
+    for name, cmd in plan:
+        if dry_run:
+            console.print(f"[primary]DRY-RUN[/primary] {name}: {' '.join(cmd)}")
+            results[name] = "dry-run"
+            continue
+        # For rm commands we don't need which() check
+        if cmd[0] != "rm" and not which(cmd[0]):
+            console.print(f"[dim]Skipping {name} — {cmd[0]} not found.[/dim]")
+            results[name] = "skipped"
+            continue
+        code, out, err = run_command(cmd, timeout=60)
+        if code != 0:
+            console.print(f"[warning]{name}:[/warning] {err or out or 'non-zero exit'}")
+            results[name] = "failed"
+        else:
+            console.print(f"[primary]{name}[/primary]: removed")
+            results[name] = "ok"
+
+    if remove_data:
+        data_dir = Path("data")
+        if dry_run:
+            console.print(f"[primary]DRY-RUN[/primary] remove data dir: {data_dir}")
+        elif data_dir.exists():
+            shutil.rmtree(data_dir, ignore_errors=True)
+            console.print(f"[primary]data/[/primary]: removed")
+        results["data-dir"] = "dry-run" if dry_run else "ok"
+
+    if remove_config:
+        cfg = Path("config/config.yaml")
+        if dry_run:
+            console.print(f"[primary]DRY-RUN[/primary] remove config: {cfg}")
+        elif cfg.exists():
+            cfg.unlink()
+            console.print(f"[primary]config/config.yaml[/primary]: removed")
+        results["config"] = "dry-run" if dry_run else "ok"
 
     return results

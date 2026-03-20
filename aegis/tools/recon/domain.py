@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import requests
 from typing import Dict, List
 
@@ -19,7 +20,6 @@ from aegis.core.utils import (
 from aegis.core.ui import console
 
 
-
 def _parse_subfinder_output(output: str) -> List[str]:
     hosts = [line.strip() for line in output.splitlines() if line.strip()]
     return sorted(set(hosts))
@@ -32,21 +32,55 @@ def _shodan_host_lookup(session, api_key: str, ip: str, timeout: int) -> Dict[st
     return response.json()
 
 
-def _parse_wappalyzer_output(raw: str) -> List[str]:
-    if not raw:
-        return []
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        return [raw]
-    if isinstance(data, dict) and "technologies" in data:
-        techs = data.get("technologies", [])
-        names = [t.get("name") for t in techs if isinstance(t, dict)]
-        return [name for name in names if name]
-    if isinstance(data, list):
-        names = [t.get("name") for t in data if isinstance(t, dict)]
-        return [name for name in names if name]
-    return [raw]
+def _detect_technologies(target_url: str, timeout: int) -> List[str]:
+    """Detect web technologies using free tools: webtech then whatweb as fallback."""
+    techs: List[str] = []
+
+    # --- Try webtech first (pip install webtech) ---
+    if which("webtech"):
+        try:
+            result = subprocess.run(
+                ["webtech", "-u", target_url],
+                capture_output=True, text=True, timeout=timeout,
+            )
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                # webtech outputs lines like "  - WordPress 6.4"
+                if line.startswith("-"):
+                    tech = line.lstrip("- ").strip()
+                    if tech:
+                        techs.append(tech)
+            if techs:
+                return techs
+        except Exception:
+            pass
+
+    # --- Fallback: whatweb (pre-installed on Kali) ---
+    if which("whatweb"):
+        try:
+            result = subprocess.run(
+                ["whatweb", "--no-errors", "-q", target_url],
+                capture_output=True, text=True, timeout=timeout,
+            )
+            # whatweb output: URL [status] Tech1[version], Tech2, ...
+            for line in result.stdout.splitlines():
+                if "[" not in line:
+                    continue
+                # strip the URL and status code part
+                parts = line.split("]", 1)
+                if len(parts) < 2:
+                    continue
+                tech_part = parts[-1].strip()
+                for entry in tech_part.split(","):
+                    name = entry.split("[")[0].strip()
+                    if name:
+                        techs.append(name)
+            if techs:
+                return list(dict.fromkeys(techs))  # deduplicate, preserve order
+        except Exception:
+            pass
+
+    return techs
 
 
 def _get_timeout(config, profile: str) -> int:
@@ -59,7 +93,7 @@ def _get_timeout(config, profile: str) -> int:
 @click.argument("domain_name")
 @click.option("--no-subdomains", is_flag=True, help="Skip subdomain enumeration.")
 @click.option("--no-shodan", is_flag=True, help="Skip Shodan passive port scan.")
-@click.option("--no-wappalyzer", is_flag=True, help="Skip Wappalyzer tech detection.")
+@click.option("--no-techdetect", is_flag=True, help="Skip technology detection.")
 @click.option("--json", "json_out", is_flag=True, help="Output results as JSON.")
 @click.option("--json-output", default=None, help="Write JSON to a file.")
 @click.pass_context
@@ -68,7 +102,7 @@ def cli(
     domain_name: str,
     no_subdomains: bool,
     no_shodan: bool,
-    no_wappalyzer: bool,
+    no_techdetect: bool,
     json_out: bool,
     json_output: str | None,
 ) -> None:
@@ -81,7 +115,6 @@ def cli(
     json_output = json_output or getattr(context, "json_output", None)
 
     subfinder_cmd = config.get("external_tools.subfinder", "subfinder")
-    wappalyzer_cmd = config.get("external_tools.wappalyzer", "wappalyzer")
     shodan_key = config.get("api_keys.shodan", "")
     timeout = _get_timeout(config, profile)
     http_timeout = int(config.get("general.http_timeout", 15))
@@ -137,23 +170,15 @@ def cli(
                         console.print(f"[bold red]Shodan query failed:[/bold red] {exc}")
             progress.remove_task(task)
 
-        if not no_wappalyzer:
-            task = progress.add_task("Detecting technologies", total=None)
-            if not which(wappalyzer_cmd):
+        if not no_techdetect:
+            task = progress.add_task("Detecting technologies (webtech/whatweb)", total=None)
+            target_url = ensure_url(domain_name)
+            techs = _detect_technologies(target_url, timeout)
+            if not techs:
                 console.print(
-                    f"[bold yellow]wappalyzer not found:[/bold yellow] {wappalyzer_cmd}"
+                    "[bold yellow]No tech detection tools found.[/bold yellow] "
+                    "Install with: [cyan]pip install webtech[/cyan] or [cyan]sudo apt install whatweb[/cyan]"
                 )
-            else:
-                target_url = ensure_url(domain_name)
-                code, out, err = run_command(
-                    [wappalyzer_cmd, target_url, "--pretty"], timeout=timeout
-                )
-                if code != 0:
-                    console.print(
-                        f"[bold red]wappalyzer failed:[/bold red] {err or 'unknown error'}"
-                    )
-                else:
-                    techs = _parse_wappalyzer_output(out)
             progress.remove_task(task)
 
     results: dict[str, object] = {
