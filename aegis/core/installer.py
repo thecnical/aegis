@@ -246,7 +246,7 @@ def run_uninstall(
             console.print(f"[primary]DRY-RUN[/primary] remove data dir: {data_dir}")
         elif data_dir.exists():
             shutil.rmtree(data_dir, ignore_errors=True)
-            console.print(f"[primary]data/[/primary]: removed")
+            console.print("[primary]data/[/primary]: removed")
         results["data-dir"] = "dry-run" if dry_run else "ok"
 
     if remove_config:
@@ -255,7 +255,7 @@ def run_uninstall(
             console.print(f"[primary]DRY-RUN[/primary] remove config: {cfg}")
         elif cfg.exists():
             cfg.unlink()
-            console.print(f"[primary]config/config.yaml[/primary]: removed")
+            console.print("[primary]config/config.yaml[/primary]: removed")
         results["config"] = "dry-run" if dry_run else "ok"
 
     return results

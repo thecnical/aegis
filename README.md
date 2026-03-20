@@ -18,6 +18,7 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-orange?style=flat-square)](https://github.com/astral-sh/ruff)
 [![PyPI](https://img.shields.io/badge/PyPI-aegis--cli-blue?style=flat-square&logo=pypi)](https://pypi.org/project/aegis-cli/)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow?style=flat-square)](https://github.com/PyCQA/bandit)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat-square&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/chandanpandit)
 
 *One command. Every phase. AI-driven.*
 
@@ -380,3 +381,64 @@ What `aegis uninstall` removes:
 - `feroxbuster` via `cargo uninstall`
 
 It does **not** remove system packages installed via `apt` (nmap, sqlmap, etc.) — those are managed by your system package manager.
+
+---
+
+## Roadmap — What's Coming Next
+
+These are the planned upgrades to make Aegis more powerful, based on current offensive security research trends:
+
+### Near-term
+- **LLM-assisted payload generation** — use the AI client to generate context-aware SQLi, XSS, and SSRF payloads based on discovered tech stack
+- **Passive JS analysis** — extract endpoints, secrets, and API keys from JavaScript files during recon (using `trufflehog` / `gitleaks` integration)
+- **Screenshot capture** — auto-screenshot discovered web services with `gowitness` and embed thumbnails in HTML reports
+- **HTTP request smuggling detection** — integrate `smuggler` or `h2csmuggler` as a vuln module
+- **Cloud asset discovery** — enumerate S3 buckets, Azure blobs, and GCP storage for a target domain
+
+### Medium-term
+- **Graph-based attack path visualization** — render a D3.js attack graph from findings (host → port → vuln → exploit chain)
+- **Autonomous exploit chaining** — AI orchestrator selects and chains exploits based on confirmed vulnerabilities, not just suggestions
+- **MCP (Model Context Protocol) server** — expose Aegis as an MCP tool so AI agents (Claude, Cursor, etc.) can drive pentests natively
+- **Team collaboration mode** — shared workspace over PostgreSQL instead of per-user SQLite
+- **Custom nuclei template generation** — AI writes Nuclei YAML templates for newly discovered endpoints
+
+### Research-grade
+- **Fuzzing integration** — `ffuf` + `boofuzz` for protocol-level fuzzing with finding correlation
+- **Binary analysis hooks** — connect to `radare2` / `ghidra` for post-exploitation binary triage
+- **Adversarial ML detection bypass** — test WAF/IDS evasion using AI-generated obfuscated payloads
+- **CVE-to-PoC auto-mapping** — correlate NVD CVEs with public PoC repos (ExploitDB, GitHub) and auto-stage them
+
+---
+
+## Contributing
+
+Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
+
+```bash
+# Set up dev environment
+git clone https://github.com/thecnical/aegis.git
+cd aegis
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+
+# Run tests
+pytest --tb=short
+
+# Lint and type check
+ruff check .
+mypy aegis/
+```
+
+---
+
+## Support the Project
+
+If Aegis saves you time on an engagement or helps you learn offensive security, consider buying me a coffee — it keeps the project going.
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/chandanpandit)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
