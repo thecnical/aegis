@@ -2,20 +2,28 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+|---------|-----------|
+| 2.x     | ✅ Yes    |
+| < 2.0   | ❌ No     |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability in Aegis, please **do not open a public GitHub issue**.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Instead, report it privately:
+
+- **GitHub:** Use [GitHub Private Vulnerability Reporting](https://github.com/thecnical/aegis/security/advisories/new)
+- **Email:** Open a GitHub issue with the title `[SECURITY]` and we will follow up privately
+
+Please include:
+- A description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Any suggested fix (optional)
+
+You can expect an acknowledgement within 48 hours and a fix or mitigation within 14 days for confirmed issues.
+
+## Scope
+
+This policy covers the `aegis-cli` Python package and the code in this repository. It does **not** cover third-party tools that Aegis wraps (nmap, nuclei, sqlmap, etc.) — report those to their respective projects.

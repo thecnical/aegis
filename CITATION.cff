@@ -11,13 +11,11 @@ abstract: >
 authors:
   - family-names: Pandey
     given-names: Chandan
-    alias: thecnical
-    website: "https://github.com/thecnical"
 repository-code: "https://github.com/thecnical/aegis"
 url: "https://github.com/thecnical/aegis"
 license: MIT
 version: "2.0.0"
-date-released: "2025-01-01"
+date-released: "2026-03-20"
 keywords:
   - penetration-testing
   - offensive-security
