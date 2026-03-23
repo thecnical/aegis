@@ -34,8 +34,8 @@ async def dashboard(request: Request) -> HTMLResponse:
     counts = {row["severity"]: row["cnt"] for row in cursor.fetchall()}
     cursor.execute("SELECT COUNT(*) as total FROM findings")
     total = cursor.fetchone()["total"]
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request, "counts": counts, "total": total
+    return templates.TemplateResponse(request, "dashboard.html", {
+        "counts": counts, "total": total
     })
 
 
@@ -47,8 +47,8 @@ async def findings_list(request: Request, page: int = 1, per_page: int = 25) -> 
     offset = (page - 1) * per_page
     cursor.execute("SELECT * FROM findings ORDER BY created_at DESC LIMIT ? OFFSET ?", (per_page, offset))
     findings = [dict(row) for row in cursor.fetchall()]
-    return templates.TemplateResponse("findings.html", {
-        "request": request, "findings": findings, "page": page
+    return templates.TemplateResponse(request, "findings.html", {
+        "findings": findings, "page": page
     })
 
 
@@ -64,8 +64,8 @@ async def finding_detail(request: Request, finding_id: int) -> HTMLResponse:
     finding = dict(row)
     notes = db.get_notes(finding_id)
     tags = db.get_tags(finding_id)
-    return templates.TemplateResponse("finding_detail.html", {
-        "request": request, "finding": finding, "notes": notes, "tags": tags
+    return templates.TemplateResponse(request, "finding_detail.html", {
+        "finding": finding, "notes": notes, "tags": tags
     })
 
 
@@ -74,8 +74,8 @@ async def add_note(request: Request, finding_id: int, body: str = Form(...)) -> 
     db = _get_db()
     db.add_note(finding_id, body)
     notes = db.get_notes(finding_id)
-    return templates.TemplateResponse("partials/notes.html", {
-        "request": request, "notes": notes, "finding_id": finding_id
+    return templates.TemplateResponse(request, "partials/notes.html", {
+        "notes": notes, "finding_id": finding_id
     })
 
 
@@ -83,8 +83,8 @@ async def add_note(request: Request, finding_id: int, body: str = Form(...)) -> 
 async def sessions_list(request: Request) -> HTMLResponse:
     db = _get_db()
     sessions = db.get_scan_sessions(50)
-    return templates.TemplateResponse("sessions.html", {
-        "request": request, "sessions": sessions
+    return templates.TemplateResponse(request, "sessions.html", {
+        "sessions": sessions
     })
 
 
