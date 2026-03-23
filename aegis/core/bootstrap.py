@@ -1,19 +1,20 @@
 """Full one-command bootstrap for Aegis on Debian/Ubuntu/Kali Linux.
 
 Installs every dependency in the correct order:
-  1. System packages via apt (with root/sudo)
+  1. System packages via apt (with root/sudo) — includes apt upgrade
   2. Go toolchain (if missing)
   3. Rust/Cargo toolchain (if missing)
-  4. Go-based tools: subfinder, nuclei, trufflehog, gowitness
+  4. Go-based tools: subfinder, nuclei, trufflehog, gowitness, amass
   5. Cargo-based tools: feroxbuster
-  6. Python tools: webtech, mcp
+  6. Python venv at /opt/aegis-venv (avoids Kali PEP 668 restriction)
   7. Creates required directories
   8. Fixes PATH so Go/Cargo bins are always found
-  9. Runs aegis doctor to validate everything
+  9. Validates everything
 """
 from __future__ import annotations
 
 import os
+import pwd
 import subprocess
 import sys
 from pathlib import Path
@@ -29,8 +30,23 @@ GO_TARBALL = f"go{GO_VERSION}.linux-amd64.tar.gz"
 GO_URL = f"https://go.dev/dl/{GO_TARBALL}"
 GO_INSTALL_DIR = "/usr/local"
 
-GOPATH_BIN = str(Path.home() / "go" / "bin")
-CARGO_BIN = str(Path.home() / ".cargo" / "bin")
+VENV_DIR = "/opt/aegis-venv"
+
+# Resolve the real user's home (works correctly under sudo)
+def _real_user() -> Tuple[str, str]:
+    """Return (username, home_dir) of the invoking user, not root."""
+    sudo_user = os.environ.get("SUDO_USER", "")
+    if sudo_user:
+        try:
+            pw = pwd.getpwnam(sudo_user)
+            return sudo_user, pw.pw_dir
+        except KeyError:
+            pass
+    return os.environ.get("USER", "root"), str(Path.home())
+
+_REAL_USER, _REAL_HOME = _real_user()
+GOPATH_BIN = str(Path(_REAL_HOME) / "go" / "bin")
+CARGO_BIN = str(Path(_REAL_HOME) / ".cargo" / "bin")
 
 APT_PACKAGES = [
     # Core pentest tools
@@ -41,8 +57,10 @@ APT_PACKAGES = [
     # WeasyPrint native deps (PDF reports)
     "libpango-1.0-0", "libpangoft2-1.0-0", "libpangocairo-1.0-0",
     "libcairo2", "libffi-dev", "libgdk-pixbuf-2.0-0",
-    # Python
-    "python3-pip", "python3-venv",
+    # Python (venv support)
+    "python3", "python3-pip", "python3-venv", "python3-full",
+    # System Go (fallback)
+    "golang-go",
 ]
 
 GO_TOOLS: List[Tuple[str, str]] = [
@@ -127,20 +145,29 @@ def _fail(label: str) -> None:
 # ── Step implementations ───────────────────────────────────────────────────────
 
 def step_apt(dry_run: bool) -> Dict[str, str]:
-    _step("Installing system packages via apt")
+    _step("Updating system packages (apt update + upgrade + install)")
     results: Dict[str, str] = {}
 
     if dry_run:
-        console.print(f"[dim]  DRY-RUN: apt install -y {' '.join(APT_PACKAGES)}[/dim]")
+        console.print(f"[dim]  DRY-RUN: apt update && apt upgrade && apt install -y {' '.join(APT_PACKAGES)}[/dim]")
         return {p: "dry-run" for p in APT_PACKAGES}
 
-    # Update first
-    code, _, err = _run(["apt-get", "update", "-qq"])
+    # Update package lists
+    code, _, err = _run(["apt-get", "update", "-y"])
     if code != 0:
         _warn(f"apt update returned {code}: {err[:100]}")
 
-    # Install in one shot
-    code, _, err = _run(["apt-get", "install", "-y", "--no-install-recommends"] + APT_PACKAGES)
+    # Upgrade existing packages
+    code, _, err = _run(["apt-get", "upgrade", "-y"])
+    if code != 0:
+        _warn(f"apt upgrade returned {code}: {err[:100]}")
+
+    # Install required packages
+    env = {"DEBIAN_FRONTEND": "noninteractive"}
+    code, _, err = _run(
+        ["apt-get", "install", "-y", "--no-install-recommends"] + APT_PACKAGES,
+        env=env,
+    )
     if code != 0:
         _warn(f"Some apt packages may have failed: {err[:200]}")
         results["apt"] = "partial"
@@ -216,12 +243,8 @@ def step_go_tools(dry_run: bool) -> Dict[str, str]:
     _step("Installing Go-based tools")
     results: Dict[str, str] = {}
 
-    env = {
-        "GOPATH": str(Path.home() / "go"),
-        "GOBIN": GOPATH_BIN,
-        "PATH": f"/usr/local/go/bin:{GOPATH_BIN}:{os.environ.get('PATH', '')}",
-        "HOME": str(Path.home()),
-    }
+    # Find go binary
+    go_bin = which("go") or "/usr/local/go/bin/go"
 
     for binary, pkg in GO_TOOLS:
         if which(binary) or Path(GOPATH_BIN, binary).exists():
@@ -233,11 +256,14 @@ def step_go_tools(dry_run: bool) -> Dict[str, str]:
             results[binary] = "dry-run"
             continue
         console.print(f"[accent]  Installing {binary}...[/accent]")
-        code, _, err = _run(
-            ["/usr/local/go/bin/go", "install", pkg],
-            env=env,
-            timeout=300,
+        # Run as the real user so GOPATH lands in their home, not /root
+        cmd = (
+            f"export GOPATH='{GOPATH_BIN}/../'; "
+            f"export GOBIN='{GOPATH_BIN}'; "
+            f"export PATH='/usr/local/go/bin:{GOPATH_BIN}:$PATH'; "
+            f"'{go_bin}' install '{pkg}'"
         )
+        code, _, err = _run(["su", "-l", _REAL_USER, "-c", cmd], timeout=300)
         if code != 0:
             _fail(f"{binary}: {err[:150]}")
             results[binary] = "failed"
@@ -262,8 +288,14 @@ def step_cargo_tools(dry_run: bool) -> Dict[str, str]:
             console.print(f"[dim]  DRY-RUN: cargo install {crate}[/dim]")
             results[binary] = "dry-run"
             continue
+        if not Path(cargo).exists() and not which("cargo"):
+            _warn(f"{binary}: cargo not found — skipping")
+            results[binary] = "skipped"
+            continue
         console.print(f"[accent]  Installing {binary}...[/accent]")
-        code, _, err = _run([cargo, "install", crate], timeout=600)
+        # Run as the real user so cargo uses their home
+        cmd = f"export PATH='{CARGO_BIN}:$PATH'; '{cargo}' install '{crate}'"
+        code, _, err = _run(["su", "-l", _REAL_USER, "-c", cmd], timeout=600)
         if code != 0:
             _fail(f"{binary}: {err[:150]}")
             results[binary] = "failed"
@@ -274,26 +306,49 @@ def step_cargo_tools(dry_run: bool) -> Dict[str, str]:
 
 
 def step_pip_tools(dry_run: bool) -> Dict[str, str]:
-    _step("Installing Python tools")
+    """Install Python tools into /opt/aegis-venv to avoid Kali PEP 668 restriction."""
+    _step(f"Setting up Python venv at {VENV_DIR}")
     results: Dict[str, str] = {}
 
+    if dry_run:
+        console.print(f"[dim]  DRY-RUN: python3 -m venv {VENV_DIR}[/dim]")
+        for binary, pkg in PIP_TOOLS:
+            console.print(f"[dim]  DRY-RUN: {VENV_DIR}/bin/pip install {pkg}[/dim]")
+            results[binary] = "dry-run"
+        return results
+
+    venv_pip = str(Path(VENV_DIR) / "bin" / "pip")
+    venv_python = str(Path(VENV_DIR) / "bin" / "python")
+
+    # Create venv if it doesn't exist
+    if not Path(venv_python).exists():
+        code, _, err = _run([sys.executable, "-m", "venv", VENV_DIR])
+        if code != 0:
+            _fail(f"Failed to create venv: {err}")
+            return {"venv": "failed"}
+        _ok(f"Venv created at {VENV_DIR}")
+    else:
+        _ok(f"Venv already exists at {VENV_DIR}")
+
+    # Upgrade pip inside venv
+    _run([venv_pip, "install", "--upgrade", "pip", "--quiet"])
+
+    # Install each tool
     for binary, pkg in PIP_TOOLS:
-        if which(binary):
-            _ok(f"{binary}: already installed")
+        venv_bin = str(Path(VENV_DIR) / "bin" / binary)
+        if Path(venv_bin).exists():
+            _ok(f"{binary}: already installed in venv")
             results[binary] = "ok"
             continue
-        if dry_run:
-            console.print(f"[dim]  DRY-RUN: pip install {pkg}[/dim]")
-            results[binary] = "dry-run"
-            continue
         console.print(f"[accent]  Installing {pkg}...[/accent]")
-        code, _, err = _run([sys.executable, "-m", "pip", "install", "--quiet", pkg])
+        code, _, err = _run([venv_pip, "install", "--quiet", pkg])
         if code != 0:
             _fail(f"{pkg}: {err[:150]}")
             results[binary] = "failed"
         else:
             _ok(pkg)
             results[binary] = "ok"
+
     return results
 
 
