@@ -26,7 +26,7 @@ from aegis.core.updater import (
     update_nuclei_templates, update_wordlists,
 )
 from aegis.core.tooling import detect_external_tools
-from aegis.core.utils import emit_json, which
+from aegis.core.utils import emit_json
 from aegis.core.ui import console, show_banner
 from aegis.core.scope_manager import ScopeManager
 from aegis.core.workspace_manager import WorkspaceManager
@@ -597,13 +597,20 @@ def interactive_cmd(ctx: AegisContext) -> None:
 
 @cli.command("doctor")
 @pass_context
-@click.option("--fix", "fix_tools", is_flag=True)
-@click.option("--force", "force_fix", is_flag=True)
+@click.option("--fix", "fix_tools", is_flag=True, help="Auto-detect tool paths and save to config.")
+@click.option("--force", "force_fix", is_flag=True, help="Overwrite existing paths even if already set.")
 def doctor(ctx: AegisContext, fix_tools: bool, force_fix: bool) -> None:
-    """Check configuration and external dependencies."""
+    """Check configuration and external dependencies.
+
+    Searches PATH, ~/go/bin, ~/.cargo/bin, .venv/bin, data/tools/,
+    and common system locations — not just $PATH.
+    """
+    from aegis.core.tooling import tool_status
+
     config = ctx.config
     api_keys = config.get("api_keys", {}) or {}
     tools = config.get("external_tools", {}) or {}
+
     if fix_tools:
         updated, detected = detect_external_tools(tools, force=force_fix)
         config_data = config.load()
@@ -613,22 +620,44 @@ def doctor(ctx: AegisContext, fix_tools: bool, force_fix: bool) -> None:
         if ctx.json_out:
             emit_json({"updated": updated, "detected": detected}, ctx.json_output)
             return
-        console.print("[primary]Updated external tool paths in config.[/primary]")
-    table = Table(title="External Tools")
-    table.add_column("Tool", style="cyan")
-    table.add_column("Command", style="magenta")
-    table.add_column("Status", style="green")
-    for name, cmd in tools.items():
-        found = which(str(cmd))
-        table.add_row(str(name), str(cmd), "ok" if found else "missing")
+        console.print(f"[primary]Updated {len(detected)} tool path(s) in config.[/primary]")
+
+    # Use tool_status for rich path-aware detection
+    statuses = tool_status(tools)
+
+    ok_count = sum(1 for s in statuses.values() if s["status"] == "ok")
+    missing_count = len(statuses) - ok_count
+
+    table = Table(title=f"External Tools  ({ok_count} found, {missing_count} missing)")
+    table.add_column("Tool", style="cyan", min_width=14)
+    table.add_column("Configured", style="dim", min_width=16)
+    table.add_column("Resolved Path", style="magenta", min_width=30)
+    table.add_column("Status", min_width=8)
+
+    for name, info in statuses.items():
+        status_str = "[green]ok[/green]" if info["status"] == "ok" else "[red]missing[/red]"
+        resolved = info["path"] or "—"
+        table.add_row(str(name), str(info["configured"]), resolved, status_str)
+
     console.print(table)
+
+    if missing_count > 0:
+        console.print(
+            f"\n[yellow]{missing_count} tool(s) not found.[/yellow] "
+            "Run [cyan]aegis doctor --fix[/cyan] to auto-detect paths, "
+            "or [cyan]sudo bash install.sh[/cyan] to install everything."
+        )
+
     key_table = Table(title="API Keys")
     key_table.add_column("Service", style="cyan")
     key_table.add_column("Configured", style="green")
     for name, value in api_keys.items():
         configured = bool(value) and value != "CHANGE_ME"
-        key_table.add_row(str(name), "yes" if configured else "no")
+        key_table.add_row(str(name), "[green]yes[/green]" if configured else "[red]no[/red]")
     console.print(key_table)
+
+    if ctx.json_out:
+        emit_json({"tools": statuses, "api_keys": {k: (bool(v) and v != "CHANGE_ME") for k, v in api_keys.items()}}, ctx.json_output)
 
 
 # ─── plugins ──────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Aegis Configuration
 # Created by Chandan Pandey
-# Docs: https://github.com/chandanpandey/aegis
+# Docs: https://github.com/thecnical/aegis
 # ─────────────────────────────────────────────────────────────────────────────
 
 general:
@@ -26,11 +26,12 @@ general:
   wordlists_repo: "https://github.com/danielmiessler/SecLists.git"
 
 # ─── API Keys ─────────────────────────────────────────────────────────────────
-# Replace CHANGE_ME with your actual keys.
+# All services below have free tiers — no paid subscription required.
 api_keys:
   shodan: "CHANGE_ME"
-  openrouter: "CHANGE_ME"   # https://openrouter.ai/keys  (free tier available)
-  bytez: "CHANGE_ME"        # https://bytez.com           (free tier available)
+  openrouter: "CHANGE_ME"   # https://openrouter.ai/keys  (free tier)
+  bytez: "CHANGE_ME"        # https://bytez.com           (free tier)
+  nvd: "CHANGE_ME"          # https://nvd.nist.gov/developers/request-an-api-key (free)
 
 # ─── Notifications ────────────────────────────────────────────────────────────
 notifications:
@@ -61,41 +62,62 @@ profiles:
     ferox_depth: 2
 
 # ─── External Tools ───────────────────────────────────────────────────────────
-# Set to the command name (if on PATH) or full absolute path.
+# Values are the command name (if on PATH) or an absolute path.
+# Run `aegis doctor --fix` to auto-detect and update all paths.
 external_tools:
-  # Core
+
+  # ── Core ──────────────────────────────────────────────────────────────────
   nmap: "nmap"
   netcat: "nc"
-  # Recon
+  git: "git"
+  curl: "curl"
+
+  # ── Recon ─────────────────────────────────────────────────────────────────
+  # Installed by: go install github.com/projectdiscovery/subfinder/...@latest
   subfinder: "subfinder"
+  # Installed by: go install github.com/owasp-amass/amass/v4/...@master
   amass: "amass"
-  # Vuln
+  # Installed by: sudo apt install theharvester
+  theHarvester: "theHarvester"
+
+  # ── Vulnerability Scanning ────────────────────────────────────────────────
+  # Installed by: go install github.com/projectdiscovery/nuclei/v3/...@latest
   nuclei: "nuclei"
+  # Installed by: cargo install feroxbuster
   feroxbuster: "feroxbuster"
+  # Installed by: sudo apt install nikto
   nikto: "nikto"
-  testssl: "testssl.sh"
+  # Installed by: sudo apt install ffuf  OR  go install github.com/ffuf/ffuf/v2@latest
   ffuf: "ffuf"
-  # Exploit
+  # Installed by: sudo apt install testssl.sh  OR  download from testssl.sh
+  # doctor will also check data/tools/testssl.sh
+  testssl: "testssl.sh"
+
+  # ── Exploitation ──────────────────────────────────────────────────────────
   sqlmap: "sqlmap"
   hydra: "hydra"
   metasploit: "msfconsole"
-  # Post
+
+  # ── Post-Exploitation ─────────────────────────────────────────────────────
   smbclient: "smbclient"
+  # linpeas/winpeas: downloaded to data/tools/ by `aegis install-tools --peas`
+  # doctor checks data/tools/linpeas.sh automatically
   linpeas: "linpeas.sh"
   winpeas: "winpeas.exe"
-  # OSINT / Passive
-  shodan: "shodan"
-  # Tech detection (free alternatives — no API key required)
-  # webtech: pip install webtech
-  # whatweb: sudo apt install whatweb  (pre-installed on Kali)
+
+  # ── Tech Detection (free, no API key) ─────────────────────────────────────
+  # Installed by: pip install webtech  (or auto-installed into .venv)
   webtech: "webtech"
+  # Pre-installed on Kali; also: sudo apt install whatweb
   whatweb: "whatweb"
-  theHarvester: "theHarvester"
-  # Screenshots
+
+  # ── Screenshots ───────────────────────────────────────────────────────────
+  # Installed by: go install github.com/sensepost/gowitness@latest
   gowitness: "gowitness"
-  # Secret scanning
+
+  # ── Secret Scanning ───────────────────────────────────────────────────────
+  # Installed by: go install github.com/trufflesecurity/trufflehog/v3@latest
   trufflehog: "trufflehog"
-  # OSINT / subdomain enumeration
-  amass: "amass"
-  # Git
-  git: "git"
+
+  # ── OSINT ─────────────────────────────────────────────────────────────────
+  shodan: "shodan"
