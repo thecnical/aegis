@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/aegis_whitepaper_mockup.png" alt="Aegis Platform Banner" width="100%">
+</p>
+
 <div align="center">
 
 ```
@@ -26,6 +30,43 @@
 > Using it against systems you do not own or have explicit written permission to test is illegal and unethical.
 
 </div>
+
+---
+
+## Resources
+
+### Architecture Mind Map
+
+> Full attack-surface breakdown — every phase, every tool, every data flow — in one diagram.
+
+<p align="center">
+  <img src="assets/notebooklm_mind_map.png" alt="Aegis Architecture Mind Map" width="100%">
+</p>
+
+---
+
+### Presentation & Whitepaper
+
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <a href="Aegis_Autonomous_Security.pdf">
+        <img src="assets/aegis_whitepaper_mockup.png" alt="Aegis Whitepaper PDF" width="100%">
+      </a>
+      <br/>
+      <strong>📄 Whitepaper / PDF</strong><br/>
+      <a href="Aegis_Autonomous_Security.pdf">View PDF →</a>
+    </td>
+    <td align="center" width="50%">
+      <a href="Aegis_Autonomous_Security.pptx">
+        <img src="assets/aegis_presentation_mockup.png" alt="Aegis Presentation PPTX" width="100%">
+      </a>
+      <br/>
+      <strong>📊 Slide Deck / PPTX</strong><br/>
+      <a href="Aegis_Autonomous_Security.pptx">Download Slides →</a>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -73,6 +114,31 @@ aegis ai auto --target example.com --format html
 | **Notifications** | Slack and Discord webhook delivery with per-severity filtering |
 | **PDF Reports** | WeasyPrint renders HTML templates to PDF with severity filtering and custom branding |
 | **100% Free** | No paid APIs required — all tools are open source |
+
+---
+
+## Strategic Vision
+
+Aegis is built on a foundation of autonomous strategy and modular integration. The following Mind Map provides a comprehensive overview of the platform's core identity, key features, and future trajectory.
+
+<p align="center">
+  <img src="assets/notebooklm_mind_map.png" alt="Aegis Autonomous Security Mind Map" width="100%">
+</p>
+
+---
+
+## Documentation & Strategic Resources
+
+Explore the theoretical and tactical foundations of Aegis through our dedicated security whitepaper and executive presentation.
+
+<div align="center">
+
+| **Autonomous Security Whitepaper** | **Executive Strategic Deck** |
+|:---:|:---:|
+| [![Aegis Whitepaper](assets/aegis_whitepaper_mockup.png)](Aegis_Autonomous_Security.pdf) | [![Aegis Presentation](assets/aegis_presentation_mockup.png)](Aegis_Autonomous_Security.pptx) |
+| [📄 Download PDF](Aegis_Autonomous_Security.pdf) | [📊 Download PPTX](Aegis_Autonomous_Security.pptx) |
+
+</div>
 
 ---
 
