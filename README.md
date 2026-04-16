@@ -5,29 +5,46 @@
 <div align="center">
 
 ```
- █████╗ ███████╗ ██████╗ ██╗███████╗
-██╔══██╗██╔════╝██╔════╝ ██║██╔════╝
-███████║█████╗  ██║  ███╗██║███████╗
-██╔══██║██╔══╝  ██║   ██║██║╚════██║
-██║  ██║███████╗╚██████╔╝██║███████║
-╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝╚══════╝
+ ░█████╗░███████╗░██████╗░██╗░██████╗
+ ██╔══██╗██╔════╝██╔════╝░██║██╔════╝
+ ███████║█████╗░░██║░░██╗░██║╚█████╗░
+ ██╔══██║██╔══╝░░██║░░╚██╗██║░╚═══██╗
+ ██║░░██║███████╗╚██████╔╝██║██████╔╝
+ ╚═╝░░╚═╝╚══════╝░╚═════╝░╚═╝╚═════╝
 ```
 
-### AI-Augmented Offensive Security Platform
+### ⚔ AI-Driven Autonomous Penetration Testing Platform ⚔
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
-[![CI](https://github.com/thecnical/aegis/actions/workflows/ci.yml/badge.svg)](https://github.com/thecnical/aegis/actions)
-[![mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square)](https://mypy-lang.org)
+> *One command. Every phase. Real agentic intelligence.*
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![CI](https://github.com/thecnical/aegis/actions/workflows/ci.yml/badge.svg?style=for-the-badge)](https://github.com/thecnical/aegis/actions)
+[![Version](https://img.shields.io/badge/Version-2.0.0-blueviolet?style=for-the-badge)](https://github.com/thecnical/aegis/releases)
+[![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-557C94?style=for-the-badge&logo=linux&logoColor=white)](https://kali.org)
+
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-orange?style=flat-square)](https://github.com/astral-sh/ruff)
+[![mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square)](https://mypy-lang.org)
 [![PyPI](https://img.shields.io/badge/PyPI-aegis--cli-blue?style=flat-square&logo=pypi)](https://pypi.org/project/aegis-cli/)
 [![Security](https://img.shields.io/badge/security-bandit-yellow?style=flat-square)](https://github.com/PyCQA/bandit)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat-square&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/chandanpandit)
 
-*One command. Every phase. Fully autonomous.*
+---
 
-> **Legal Notice:** Aegis is intended for authorized penetration testing and security research only.
-> Using it against systems you do not own or have explicit written permission to test is illegal and unethical.
+```
+  ┌─ 15+ Attack Modules  ·  10+ WAF Vendors  ·  100% Free & Open Source ─┐
+  │  Recon → Vuln → Exploit → Post → Report                               │
+  │  AI selects tools. AI reads output. AI decides next.                   │
+  └────────────────────────────────────────────────────────────────────────┘
+```
+
+```bash
+# Full autonomous pentest — one command
+aegis ai auto --target example.com --full --format html
+```
+
+> **Legal Notice:** For authorized penetration testing and security research only.
+> Using against systems you do not own or have explicit written permission to test is illegal.
 
 </div>
 
