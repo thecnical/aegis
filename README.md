@@ -98,26 +98,27 @@ aegis ai auto --target example.com --format html
 | Feature | Description |
 |---|---|
 | **Autonomous AI Mode** | Real agentic loop: nmap → parse services → AI selects tools → run → parse → AI next action |
-| **AI Payload Execution** | Generates AND actually sends SQLi/XSS/LFI/SSRF payloads to discovered endpoints, checks responses |
-| **HTTP Evidence Capture** | Every nuclei finding stores the full HTTP request + response status + body snippet |
-| **WAF Detection** | Detects 10+ WAF vendors (Cloudflare, AWS WAF, Akamai, ModSecurity, etc.) before running exploits |
-| **Hydra Brute-Force** | Real credential testing via Hydra against SSH, FTP, MySQL, RDP, SMB, HTTP with custom wordlists |
+| **AI Payload Execution** | Generates AND actually sends SQLi/XSS/LFI/SSRF payloads, checks responses for confirmation |
+| **HTTP Evidence Capture** | Every nuclei finding stores full HTTP request + response status + body snippet |
+| **WAF Detection** | Detects 10+ WAF vendors (Cloudflare, AWS WAF, Akamai, ModSecurity, etc.) before exploiting |
+| **Hydra Brute-Force** | Real credential testing via Hydra against SSH, FTP, MySQL, RDP, SMB, HTTP |
 | **Authenticated Scanning** | Pass `--cookies` and `--header` to nuclei and feroxbuster for post-login scanning |
-| **PostgreSQL Support** | Use `--config` with `db_path: postgresql://user:pass@host/aegis` for team/concurrent use |
-| **Secret Extraction** | `trufflehog` scans JS files, git repos, and local paths for exposed API keys and credentials |
-| **Screenshot Capture** | `gowitness` auto-screenshots all discovered web services; images embedded in HTML reports |
-| **Attack Path Graph** | Interactive D3.js force-directed graph in HTML reports — hosts, findings, severity chains |
-| **MCP Server** | Exposes Aegis as an MCP tool server — Claude, Cursor, and other AI agents can drive pentests |
-| **Burp Suite Import** | XXE-safe XML parsing, base64 request/response decoding, findings stored with full HTTP evidence |
+| **Metasploit Integration** | Auto-maps Nuclei findings to MSF modules, runs via resource scripts or RPC API |
+| **HTTP Request Smuggling** | Raw socket-based CL.TE, TE.CL, TE.TE detection with timing + content analysis |
+| **Cloud Asset Discovery** | Finds exposed S3, Azure Blob, GCP Storage buckets via permutation + DNS detection |
+| **Active Directory Enum** | BloodHound, ldapdomaindump, CrackMapExec, anonymous rpcclient enumeration |
+| **OOB SSRF/XXE Detection** | interactsh-based DNS/HTTP callback detection for blind SSRF and XXE |
+| **Secret Extraction** | `trufflehog` scans JS files, git repos, and local paths for exposed credentials |
+| **Screenshot Capture** | `gowitness` auto-screenshots all discovered web services; images in HTML reports |
+| **Attack Path Graph** | Interactive D3.js force-directed graph in HTML reports |
+| **MCP Server** | Exposes Aegis as an MCP tool server — Claude, Cursor can drive full pentests |
+| **Burp Suite Import** | XXE-safe XML parsing, base64 decoding, findings stored with full HTTP evidence |
 | **CVE Correlation** | Queries NVD API v2, stores CVSS v3.1 scores and vectors per finding |
-| **SARIF Export** | SARIF v2.1.0 with rule IDs, OWASP URIs, and GitHub security-severity scores |
+| **SARIF Export** | SARIF v2.1.0 with rule IDs, OWASP URIs, GitHub security-severity scores |
 | **Parallel Campaigns** | `asyncio`-based runner — each target gets its own session, results aggregated |
-| **REST API** | FastAPI with async scan jobs, paginated findings, Burp import, SARIF download |
+| **PostgreSQL Support** | Use `db_path: postgresql://...` for team/concurrent use |
 | **Workspace Isolation** | Each engagement has its own SQLite database — zero cross-engagement data leakage |
-| **Scope Enforcement** | Every target is checked against scope before any tool runs; `safe_mode` aborts out-of-scope scans |
-| **Deduplication** | SHA-256 fingerprint of `title+host+category` — duplicate findings are silently dropped |
-| **Notifications** | Slack and Discord webhook delivery with per-severity filtering |
-| **PDF Reports** | WeasyPrint renders HTML templates to PDF with severity filtering and custom branding |
+| **Scope Enforcement** | Every target checked against scope before any tool runs |
 | **100% Free** | No paid APIs required — all tools are open source |
 
 ---
@@ -405,6 +406,81 @@ aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10 --scan
 # Port forward: access internal RDP through local port 3390
 aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10 \
   --forward 3390:10.0.0.5:3389
+```
+
+### Metasploit Integration
+
+```bash
+# Auto-match all findings for a target to MSF modules
+aegis exploit msf 192.168.1.1 --force
+
+# Run a specific MSF module (check only — no exploitation)
+aegis exploit msf 192.168.1.1 --module exploit/windows/smb/ms17_010_eternalblue \
+  --check --force
+
+# Run from a specific finding ID
+aegis exploit msf 192.168.1.1 --finding-id 42 --lhost 10.10.10.1 --force
+
+# Use Metasploit RPC API (requires: msfrpcd -P yourpassword -S -f)
+aegis exploit msf 192.168.1.1 --rpc-host 127.0.0.1 --rpc-pass yourpassword --force
+```
+
+### HTTP Request Smuggling
+
+```bash
+# Test for CL.TE, TE.CL, TE.TE desync vulnerabilities
+aegis vuln smuggling https://example.com
+
+# Test a specific path
+aegis vuln smuggling https://example.com --path /api/v1/users
+
+# Adjust timeout (longer = more sensitive timing detection)
+aegis vuln smuggling https://example.com --timeout 20
+```
+
+### Cloud Asset Discovery
+
+```bash
+# Discover exposed S3, Azure Blob, GCP Storage buckets
+aegis recon cloud example.com
+
+# Skip specific providers
+aegis recon cloud example.com --no-azure --no-gcp
+
+# Use custom bucket name wordlist
+aegis recon cloud example.com --wordlist /path/to/buckets.txt
+```
+
+### Active Directory Enumeration
+
+```bash
+# Anonymous enumeration (no credentials needed)
+aegis recon ad 192.168.1.10 --domain corp.local
+
+# Full enumeration with credentials
+aegis recon ad 192.168.1.10 --domain corp.local \
+  --username administrator --password Password123
+
+# After BloodHound collection, import into BloodHound GUI:
+# bloodhound → Upload Data → select zip from data/ad/bloodhound/
+# Run query: "Find Shortest Paths to Domain Admins"
+```
+
+### OOB SSRF/XXE Detection
+
+```bash
+# Auto-detect using interactsh
+# Install: go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest
+aegis exploit oob https://example.com --force
+
+# Use custom callback domain (Burp Collaborator, etc.)
+aegis exploit oob https://example.com --callback your.burpcollaborator.net --force
+
+# Test XXE as well (sends XML payloads to the endpoint)
+aegis exploit oob https://example.com --test-xxe --force
+
+# Wait longer for async callbacks
+aegis exploit oob https://example.com --wait 30 --force
 ```
 
 ---
@@ -756,16 +832,16 @@ mypy aegis/                # type check
 ## Roadmap
 
 **Near-term**
-- HTTP request smuggling detection (`smuggler` / `h2csmuggler` integration)
-- Cloud asset discovery — S3 buckets, Azure blobs, GCP storage enumeration
+- Metasploit session management — interact with opened shells from the CLI
+- Cloud asset enumeration expansion — Route53, Azure DNS, GCP DNS zone transfers
 - Passive JS endpoint extraction during recon
-- OOB (out-of-band) SSRF/XXE detection via DNS callback
+- OOB DNS-only mode (no interactsh dependency)
 
 **Medium-term**
 - Autonomous exploit chaining — AI selects and chains exploits based on confirmed vulns
 - Custom Nuclei template generation — AI writes YAML templates for discovered endpoints
-- Metasploit integration — launch MSF modules from confirmed Nuclei findings
-- Active directory enumeration (BloodHound/ldapdomaindump integration)
+- Active directory attack path execution — auto-run BloodHound-suggested attack paths
+- Kerberoasting and AS-REP roasting integration
 
 **Research-grade**
 - Protocol-level fuzzing with `boofuzz` and finding correlation
