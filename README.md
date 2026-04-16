@@ -97,8 +97,13 @@ aegis ai auto --target example.com --format html
 
 | Feature | Description |
 |---|---|
-| **Autonomous AI Mode** | `aegis ai auto` runs all phases end-to-end — recon, vuln scan, exploit suggestions, report |
-| **AI Payload Generation** | After recon, AI generates targeted SQLi, XSS, SSRF, LFI, RCE payloads based on detected tech stack |
+| **Autonomous AI Mode** | Real agentic loop: nmap → parse services → AI selects tools → run → parse → AI next action |
+| **AI Payload Execution** | Generates AND actually sends SQLi/XSS/LFI/SSRF payloads to discovered endpoints, checks responses |
+| **HTTP Evidence Capture** | Every nuclei finding stores the full HTTP request + response status + body snippet |
+| **WAF Detection** | Detects 10+ WAF vendors (Cloudflare, AWS WAF, Akamai, ModSecurity, etc.) before running exploits |
+| **Hydra Brute-Force** | Real credential testing via Hydra against SSH, FTP, MySQL, RDP, SMB, HTTP with custom wordlists |
+| **Authenticated Scanning** | Pass `--cookies` and `--header` to nuclei and feroxbuster for post-login scanning |
+| **PostgreSQL Support** | Use `--config` with `db_path: postgresql://user:pass@host/aegis` for team/concurrent use |
 | **Secret Extraction** | `trufflehog` scans JS files, git repos, and local paths for exposed API keys and credentials |
 | **Screenshot Capture** | `gowitness` auto-screenshots all discovered web services; images embedded in HTML reports |
 | **Attack Path Graph** | Interactive D3.js force-directed graph in HTML reports — hosts, findings, severity chains |
@@ -276,6 +281,130 @@ aegis report generate example.com --format html
 
 # 5. Or do all of the above in one command
 aegis ai auto --target example.com --format html --full
+```
+
+---
+
+## Complete Usage Guide
+
+### Hydra Brute-Force (real credential testing)
+
+```bash
+# Test SSH with default credentials (requires --force to bypass safe_mode)
+aegis vuln net 192.168.1.1 --service ssh --force
+
+# Test all services at once
+aegis vuln net 192.168.1.1 --service all --force
+
+# Use custom wordlists
+aegis vuln net 192.168.1.1 --service ssh \
+  --userlist /usr/share/wordlists/users.txt \
+  --passlist /usr/share/wordlists/rockyou.txt --force
+
+# WAF detection only (no brute-force)
+aegis vuln net 192.168.1.1 --no-brute --url http://192.168.1.1
+```
+
+### HTTP Evidence Capture (every finding has proof)
+
+```bash
+# Web scan — captures full HTTP request/response for every finding
+aegis vuln web https://example.com
+
+# Authenticated scan — pass session cookies
+aegis vuln web https://example.com --cookies "session=abc123; csrf=xyz"
+
+# With custom auth header (Bearer token, API key, etc.)
+aegis vuln web https://example.com --header "Authorization: Bearer eyJ..."
+
+# Target specific vulnerability types
+aegis vuln web https://example.com --tags "cve,sqli,xss"
+```
+
+### WAF Detection
+
+```bash
+# Detect WAF before running any exploits
+aegis vuln net 192.168.1.1 --no-brute --no-smb --url https://example.com
+
+# WAF detection runs automatically in ai auto mode
+aegis ai auto --target example.com
+
+# If WAF detected, use stealth profile to reduce noise
+aegis --profile stealth vuln web https://example.com
+```
+
+### PostgreSQL (team/concurrent use)
+
+```bash
+# Install driver
+pip install psycopg2-binary
+
+# Create database
+createdb aegis
+psql aegis -c "CREATE USER aegis WITH PASSWORD 'yourpassword';"
+psql aegis -c "GRANT ALL ON DATABASE aegis TO aegis;"
+
+# Update config/config.yaml:
+# db_path: "postgresql://aegis:yourpassword@localhost:5432/aegis"
+```
+
+### Authenticated Scanning (post-login)
+
+```bash
+# Log in manually, grab your session cookie, then scan
+aegis vuln web https://app.example.com/dashboard \
+  --cookies "sessionid=abc123def456" \
+  --header "X-CSRF-Token: token123"
+
+# API scan with Bearer token
+aegis vuln web https://api.example.com \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..." \
+  --tags "api,auth"
+```
+
+### Full Autonomous Pentest (end-to-end)
+
+```bash
+# 1. Set up workspace and scope
+aegis workspace create client-acme
+aegis workspace switch client-acme
+aegis scope add acme.com --kind domain
+aegis scope add 10.10.0.0/24 --kind cidr
+
+# 2. Run full autonomous pentest
+aegis ai auto --target acme.com --full --format html
+
+# 3. Triage and correlate
+aegis ai triage --session 1
+aegis cve correlate --session 1
+
+# 4. Export for CI/CD
+aegis sarif export --session 1 --output results.sarif
+```
+
+### Credential Collection (post-exploitation)
+
+```bash
+# List SMB shares
+aegis post creds --target 192.168.1.10
+
+# Deep scan — download and scan files for passwords/tokens
+aegis post creds --target 192.168.1.10 --deep
+```
+
+### Pivoting (internal network)
+
+```bash
+# SOCKS5 proxy through a compromised host
+aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10
+
+# Scan internal network through the proxy
+aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10 --scan
+
+# Port forward: access internal RDP through local port 3390
+aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10 \
+  --forward 3390:10.0.0.5:3389
 ```
 
 ---
@@ -630,16 +759,19 @@ mypy aegis/                # type check
 - HTTP request smuggling detection (`smuggler` / `h2csmuggler` integration)
 - Cloud asset discovery — S3 buckets, Azure blobs, GCP storage enumeration
 - Passive JS endpoint extraction during recon
+- OOB (out-of-band) SSRF/XXE detection via DNS callback
 
 **Medium-term**
 - Autonomous exploit chaining — AI selects and chains exploits based on confirmed vulns
-- Team collaboration mode — shared workspace over PostgreSQL
 - Custom Nuclei template generation — AI writes YAML templates for discovered endpoints
+- Metasploit integration — launch MSF modules from confirmed Nuclei findings
+- Active directory enumeration (BloodHound/ldapdomaindump integration)
 
 **Research-grade**
 - Protocol-level fuzzing with `boofuzz` and finding correlation
 - WAF/IDS evasion using AI-generated obfuscated payloads
 - CVE-to-PoC auto-mapping — correlate NVD CVEs with ExploitDB and GitHub PoCs
+- LLM-generated custom exploit code for confirmed vulnerabilities
 
 ---
 
