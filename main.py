@@ -1325,6 +1325,433 @@ def report() -> None:
     """Reporting and export tools."""
 
 
+# ─── help ─────────────────────────────────────────────────────────────────────
+
+@cli.command("help")
+@click.argument("topic", required=False, default=None)
+def help_cmd(topic: Optional[str]) -> None:
+    """Show detailed help. Use 'aegis help <topic>' for a specific section.
+
+    Topics: recon, vuln, exploit, post, ai, report, workflow, config, install
+    """
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.rule import Rule
+
+    if topic:
+        _show_topic_help(topic.lower())
+        return
+
+    # ── Main help overview ────────────────────────────────────────────────────
+    console.print()
+    console.print(Rule("[bold bright_green] AEGIS — Command Reference [/bold bright_green]", style="bright_green"))
+    console.print()
+
+    # Global flags
+    t = Table(title="Global Flags (apply to every command)", border_style="dim green", show_header=True)
+    t.add_column("Flag", style="bright_cyan", min_width=22)
+    t.add_column("Default", style="dim white", min_width=20)
+    t.add_column("Description", style="white")
+    t.add_row("--config PATH",    "config/config.yaml", "Path to config file")
+    t.add_row("--profile NAME",   "default",            "Scan profile (default/fast/deep/stealth)")
+    t.add_row("--workspace NAME", "active workspace",   "Override active workspace for this command")
+    t.add_row("--json",           "off",                "Print all output as JSON")
+    t.add_row("--json-output FILE","—",                 "Write JSON output to a file")
+    t.add_row("--debug",          "off",                "Enable verbose debug logging")
+    console.print(t)
+    console.print()
+
+    # Command groups
+    groups = [
+        ("recon",     "bright_green",  "Information gathering",
+         [
+             ("domain <domain>",          "Subdomain enum + Shodan + tech detection"),
+             ("network <cidr>",           "Nmap ping sweep + port scan"),
+             ("dns <domain>",             "DNS record enumeration (A/MX/TXT/NS/CNAME)"),
+             ("osint <target>",           "Emails, LinkedIn, GitHub dorks via theHarvester"),
+             ("cloud <domain>",           "S3 / Azure Blob / GCP Storage bucket discovery"),
+             ("secrets <path|url>",       "API key & credential scanning via trufflehog"),
+             ("screenshot <url>",         "Web service screenshots via gowitness"),
+             ("ad <dc_ip> --domain ...",  "Active Directory: BloodHound + ldapdomaindump + CME"),
+         ]),
+        ("vuln",      "bright_cyan",   "Vulnerability scanning",
+         [
+             ("web <url>",                "Nuclei + feroxbuster + HTTP evidence capture"),
+             ("net <ip>",                 "Hydra brute-force + SMB enum + WAF detection"),
+             ("ssl <host>",               "SSL/TLS analysis via testssl.sh"),
+             ("api <url>",                "API endpoint fuzzing via ffuf"),
+             ("smuggling <url>",          "HTTP request smuggling (CL.TE / TE.CL / TE.TE)"),
+         ]),
+        ("exploit",   "bold red",      "Exploitation",
+         [
+             ("web <url>",                "SQLmap + reflected XSS testing"),
+             ("net <ip>",                 "Hydra brute-force + netcat listener"),
+             ("lfi <url>",                "Local File Inclusion testing (9 payloads)"),
+             ("ssrf <url>",               "SSRF parameter injection testing"),
+             ("oob <url>",                "OOB SSRF/XXE via interactsh DNS callback"),
+             ("msf <target>",             "Metasploit: auto-map findings → MSF modules"),
+         ]),
+        ("post",      "yellow",        "Post-exploitation",
+         [
+             ("shell <ip>",               "LinPEAS/WinPEAS enumeration + privesc hints"),
+             ("creds --target <ip>",      "SMB share enumeration + credential file scanning"),
+             ("pivoting <net> --ssh ...", "SOCKS5 proxy + port forward + internal scan"),
+         ]),
+        ("ai",        "bright_magenta","AI-powered analysis",
+         [
+             ("auto --target <host>",     "Full autonomous pentest: recon→vuln→exploit→report"),
+             ("triage --session <id>",    "AI triage of findings with remediation advice"),
+             ("summarize --session <id>", "Executive summary of a scan session"),
+             ("suggest --target <host>",  "Attack surface suggestions for a target"),
+             ("report --target <host>",   "AI-written pentest report narrative"),
+             ("chat",                     "Interactive AI chat about findings"),
+         ]),
+        ("report",    "bright_white",  "Reporting & export",
+         [
+             ("generate <target>",        "Generate report (--format md|html|pdf)"),
+             ("export",                   "Export findings as JSON"),
+         ]),
+    ]
+
+    for group_name, color, desc, commands in groups:
+        t = Table(
+            title=f"[bold {color}]aegis {group_name}[/bold {color}]  —  {desc}",
+            border_style="dim green",
+            show_header=True,
+            min_width=70,
+        )
+        t.add_column("Command", style=color, min_width=32)
+        t.add_column("What it does", style="white")
+        for cmd, what in commands:
+            t.add_row(f"aegis {group_name} {cmd}", what)
+        console.print(t)
+        console.print()
+
+    # Other top-level commands
+    t = Table(title="Other Commands", border_style="dim green", show_header=True)
+    t.add_column("Command", style="bright_cyan", min_width=32)
+    t.add_column("What it does", style="white")
+    rows = [
+        ("aegis doctor",                  "Check all tools and API keys are configured"),
+        ("aegis doctor --fix",            "Auto-detect tool paths and save to config"),
+        ("aegis scope add <target>",      "Add a target to scope (domain/ip/cidr/url)"),
+        ("aegis scope list",              "List all in-scope targets"),
+        ("aegis workspace create <name>", "Create a new isolated engagement workspace"),
+        ("aegis workspace switch <name>", "Switch active workspace"),
+        ("aegis bootstrap --yes",         "Install ALL tools automatically (requires sudo)"),
+        ("aegis install-tools --yes",     "Interactive tool installer"),
+        ("aegis uninstall",               "Remove Aegis and installed tools"),
+        ("aegis cve correlate",           "Correlate findings with NVD CVE database"),
+        ("aegis sarif export",            "Export findings as SARIF for GitHub Code Scanning"),
+        ("aegis burp import <file>",      "Import findings from Burp Suite XML export"),
+        ("aegis notify test",             "Send test notification to Slack/Discord"),
+        ("aegis campaign create <name>",  "Create a multi-target scan campaign"),
+        ("aegis serve",                   "Start the FastAPI web UI"),
+        ("aegis help <topic>",            "Detailed help for a topic"),
+    ]
+    for cmd, what in rows:
+        t.add_row(cmd, what)
+    console.print(t)
+    console.print()
+
+    console.print(
+        Panel(
+            "[dim white]For topic-specific help:[/dim white]\n"
+            "  [bright_cyan]aegis help workflow[/bright_cyan]   — step-by-step pentest workflow\n"
+            "  [bright_cyan]aegis help config[/bright_cyan]     — configuration reference\n"
+            "  [bright_cyan]aegis help install[/bright_cyan]    — installation guide\n"
+            "  [bright_cyan]aegis help recon[/bright_cyan]      — recon module deep-dive\n"
+            "  [bright_cyan]aegis help ai[/bright_cyan]         — AI features guide",
+            title="[bold bright_green] Tips [/bold bright_green]",
+            border_style="bright_green",
+            padding=(0, 2),
+        )
+    )
+    console.print()
+
+
+def _show_topic_help(topic: str) -> None:
+    """Show detailed help for a specific topic."""
+    topics: dict = {
+        "workflow": _help_workflow,
+        "config":   _help_config,
+        "install":  _help_install,
+        "recon":    _help_recon,
+        "ai":       _help_ai,
+        "vuln":     _help_vuln,
+        "exploit":  _help_exploit,
+        "post":     _help_post,
+    }
+
+    fn = topics.get(topic)
+    if fn:
+        fn()
+    else:
+        console.print(f"[yellow]Unknown topic: {topic}[/yellow]")
+        console.print(f"Available topics: {', '.join(topics.keys())}")
+
+
+def _help_workflow() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Pentest Workflow [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]Step 1 — Set up workspace and scope[/bold bright_cyan]
+  aegis workspace create client-acme
+  aegis workspace switch client-acme
+  aegis scope add acme.com --kind domain
+  aegis scope add 10.10.0.0/24 --kind cidr
+
+[bold bright_cyan]Step 2 — Recon[/bold bright_cyan]
+  aegis recon domain acme.com          # subdomains, tech stack, Shodan
+  aegis recon network 10.10.0.0/24     # live hosts, open ports
+  aegis recon osint acme.com --emails  # emails, LinkedIn, GitHub leaks
+  aegis recon cloud acme.com           # exposed S3/Azure/GCP buckets
+  aegis recon secrets /path/to/repo    # API keys in code
+
+[bold bright_cyan]Step 3 — Vulnerability scanning[/bold bright_cyan]
+  aegis vuln web https://acme.com      # Nuclei + directory scan
+  aegis vuln net 10.10.0.5             # WAF detection + SMB + brute-force
+  aegis vuln ssl acme.com              # SSL/TLS issues
+  aegis vuln smuggling https://acme.com # HTTP request smuggling
+
+[bold bright_cyan]Step 4 — Exploitation[/bold bright_cyan]
+  aegis exploit web https://acme.com --force   # SQLi + XSS
+  aegis exploit lfi https://acme.com/page?f=   # LFI testing
+  aegis exploit oob https://acme.com --force   # OOB SSRF/XXE
+  aegis exploit msf 10.10.0.5 --force          # Metasploit auto-exploit
+
+[bold bright_cyan]Step 5 — Post-exploitation[/bold bright_cyan]
+  aegis post creds --target 10.10.0.5 --deep   # credential hunting
+  aegis post pivoting 10.0.0.0/24 --ssh user@10.10.0.5 --scan
+
+[bold bright_cyan]Step 6 — Report[/bold bright_cyan]
+  aegis ai triage --session 1
+  aegis cve correlate --session 1
+  aegis report generate acme.com --format html
+  aegis sarif export --session 1 --output results.sarif
+
+[bold bright_cyan]OR — Do everything in one command:[/bold bright_cyan]
+  [bold yellow]aegis ai auto --target acme.com --full --format html[/bold yellow]
+""")
+
+
+def _help_config() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Configuration Reference [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold white]File:[/bold white] [bright_cyan]config/config.yaml[/bright_cyan]
+
+[bold bright_cyan]general:[/bold bright_cyan]
+  db_path: data/aegis.db          [dim]# SQLite (default) or postgresql://user:pass@host/db[/dim]
+  safe_mode: true                 [dim]# abort if target is out of scope[/dim]
+  wordlists_path: data/wordlists
+
+[bold bright_cyan]api_keys:[/bold bright_cyan]
+  shodan: CHANGE_ME               [dim]# https://shodan.io (free tier)[/dim]
+  openrouter: CHANGE_ME           [dim]# https://openrouter.ai (free tier) — for AI features[/dim]
+  bytez: CHANGE_ME                [dim]# https://bytez.com (free tier) — for AI features[/dim]
+  nvd: CHANGE_ME                  [dim]# https://nvd.nist.gov (free) — for CVE correlation[/dim]
+
+[bold bright_cyan]profiles:[/bold bright_cyan]
+  default:  timeout=30, nmap="-sC -sV", nuclei_rate=150
+  fast:     timeout=10, nmap="-sS",     nuclei_rate=300
+  deep:     timeout=90, nmap="-sC -sV -A -O --script=vuln"
+  stealth:  timeout=120, nmap="-sS -T2 --randomize-hosts"
+
+[bold bright_cyan]notifications:[/bold bright_cyan]
+  slack_webhook: ""               [dim]# https://api.slack.com/messaging/webhooks[/dim]
+  discord_webhook: ""             [dim]# Discord channel webhook URL[/dim]
+
+[bold white]Switch profile:[/bold white]  aegis --profile stealth vuln web https://example.com
+[bold white]Auto-detect tools:[/bold white]  aegis doctor --fix
+""")
+
+
+def _help_install() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Installation Guide [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]Option 1 — One command (recommended for Kali Linux):[/bold bright_cyan]
+  git clone https://github.com/thecnical/aegis.git
+  cd aegis
+  sudo bash install.sh
+
+[bold bright_cyan]Option 2 — Bootstrap (if Aegis already installed):[/bold bright_cyan]
+  sudo aegis bootstrap --yes
+  sudo aegis bootstrap --yes --skip-rust   [dim]# skip feroxbuster[/dim]
+  aegis bootstrap --dry-run                [dim]# preview only[/dim]
+
+[bold bright_cyan]Option 3 — Manual:[/bold bright_cyan]
+  sudo apt update && sudo apt install -y python3-pip python3-venv git
+  git clone https://github.com/thecnical/aegis.git && cd aegis
+  python3 -m venv .venv && source .venv/bin/activate
+  pip install -e .
+  aegis install-tools --yes
+
+[bold bright_cyan]After install:[/bold bright_cyan]
+  source ~/.zshrc          [dim]# reload PATH for Go/Cargo tools[/dim]
+  aegis doctor             [dim]# verify all tools found[/dim]
+  aegis doctor --fix       [dim]# auto-detect tool paths[/dim]
+
+[bold bright_cyan]External tools installed automatically:[/bold bright_cyan]
+  apt:    nmap, sqlmap, nikto, whatweb, ffuf, hydra, smbclient
+  go:     subfinder, nuclei, trufflehog, gowitness, amass
+  cargo:  feroxbuster
+  pip:    webtech, mcp
+""")
+
+
+def _help_recon() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Recon Module [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]aegis recon domain <domain>[/bold bright_cyan]
+  Subdomain enumeration (subfinder), Shodan passive ports, tech detection (webtech/whatweb)
+  Options: --no-subdomains  --no-shodan  --no-techdetect  --json
+
+[bold bright_cyan]aegis recon network <cidr>[/bold bright_cyan]
+  Nmap ping sweep to find live hosts, optional full port scan
+  Options: --ping-only  --port-scan  --json
+
+[bold bright_cyan]aegis recon dns <domain>[/bold bright_cyan]
+  Query DNS records: A, MX, TXT, NS, CNAME, AAAA
+  Options: --types A,MX,TXT
+
+[bold bright_cyan]aegis recon osint <target>[/bold bright_cyan]
+  theHarvester: emails, hosts, IPs, LinkedIn profiles, GitHub dorks
+  Options: --emails  --github-dorks  --linkedin  --sources google,bing,crtsh
+
+[bold bright_cyan]aegis recon cloud <domain>[/bold bright_cyan]
+  Discover exposed S3 buckets, Azure Blob containers, GCP Storage buckets
+  Options: --no-s3  --no-azure  --no-gcp  --wordlist <file>
+
+[bold bright_cyan]aegis recon secrets <path|url>[/bold bright_cyan]
+  trufflehog: scan for API keys, tokens, credentials in files or git repos
+  Options: --mode filesystem|git  --timeout 120
+
+[bold bright_cyan]aegis recon screenshot <url>[/bold bright_cyan]
+  gowitness: screenshot web services, save to data/screenshots/
+  Options: --from-db  --out-dir  --timeout
+
+[bold bright_cyan]aegis recon ad <dc_ip> --domain <domain>[/bold bright_cyan]
+  Active Directory: anonymous enum (rpcclient), ldapdomaindump, bloodhound-python, CME
+  Options: --username  --password  --no-bloodhound  --no-ldap  --no-cme
+""")
+
+
+def _help_ai() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] AI Features [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]aegis ai auto --target <host>[/bold bright_cyan]
+  Full autonomous pentest. Real agentic loop:
+    1. Nmap → parse hosts/ports/services
+    2. AI reads services → selects tools
+    3. Nuclei/feroxbuster → parse structured findings
+    4. AI generates payloads → sends HTTP requests → checks responses
+    5. AI writes executive summary → generates report
+
+  Options: --full (all 5 phases)  --format md|html|pdf  --dry-run  --min-severity
+
+[bold bright_cyan]aegis ai triage --session <id>[/bold bright_cyan]
+  AI reads all findings from a session and provides remediation advice
+
+[bold bright_cyan]aegis ai summarize --session <id>[/bold bright_cyan]
+  3-sentence executive summary of a scan session
+
+[bold bright_cyan]aegis ai suggest --target <host>[/bold bright_cyan]
+  AI suggests attack surface areas and testing approaches
+
+[bold bright_cyan]aegis ai chat[/bold bright_cyan]
+  Interactive AI chat — ask anything about your findings
+
+[bold bright_cyan]AI providers (free tiers):[/bold bright_cyan]
+  OpenRouter: https://openrouter.ai/keys
+  Bytez:      https://bytez.com
+  Add keys to config/config.yaml under api_keys
+""")
+
+
+def _help_vuln() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Vuln Module [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]aegis vuln web <url>[/bold bright_cyan]
+  Nuclei template scan + feroxbuster directory scan + HTTP evidence capture
+  Options: --no-dir-scan  --no-nuclei  --cookies "session=abc"  --header "Auth: Bearer TOKEN"  --tags cve,sqli
+
+[bold bright_cyan]aegis vuln net <ip>[/bold bright_cyan]
+  WAF detection + SMB share enumeration + Hydra brute-force
+  Options: --service ssh|ftp|mysql|all  --userlist  --passlist  --url  --force
+
+[bold bright_cyan]aegis vuln ssl <host>[/bold bright_cyan]
+  testssl.sh: comprehensive SSL/TLS analysis
+  Options: --port 443
+
+[bold bright_cyan]aegis vuln api <url>[/bold bright_cyan]
+  ffuf: API endpoint fuzzing with wordlist
+  Options: --wordlist <path>
+
+[bold bright_cyan]aegis vuln smuggling <url>[/bold bright_cyan]
+  Raw socket HTTP request smuggling: CL.TE, TE.CL, TE.TE (obfuscated)
+  Options: --path /  --timeout 15
+""")
+
+
+def _help_exploit() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Exploit Module [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]aegis exploit web <url> --force[/bold bright_cyan]
+  sqlmap (SQLi) + reflected XSS testing
+  Options: --no-sqlmap  --no-xss  --param q
+
+[bold bright_cyan]aegis exploit lfi <url> --param <name>[/bold bright_cyan]
+  9 LFI payloads (path traversal + URL encoding), checks for /etc/passwd
+
+[bold bright_cyan]aegis exploit ssrf <url> --callback <domain>[/bold bright_cyan]
+  SSRF parameter injection with redirect detection
+
+[bold bright_cyan]aegis exploit oob <url> --force[/bold bright_cyan]
+  OOB SSRF/XXE via interactsh DNS/HTTP callback
+  Options: --callback your.domain  --test-xxe  --wait 30
+
+[bold bright_cyan]aegis exploit msf <target> --force[/bold bright_cyan]
+  Auto-map Nuclei findings to Metasploit modules, run via resource scripts
+  Options: --module  --finding-id  --check  --lhost  --lport  --rpc-host
+
+[bold white]All exploit commands require --force to bypass safe_mode.[/bold white]
+""")
+
+
+def _help_post() -> None:
+    from rich.rule import Rule
+    console.print()
+    console.print(Rule("[bold bright_green] Post-Exploitation Module [/bold bright_green]", style="bright_green"))
+    console.print("""
+[bold bright_cyan]aegis post shell <ip>[/bold bright_cyan]
+  Run LinPEAS/WinPEAS, parse for CVEs and privilege escalation hints
+  Options: --no-enum  --no-privesc
+
+[bold bright_cyan]aegis post creds --target <ip>[/bold bright_cyan]
+  List SMB shares. With --deep: download files and scan for passwords/tokens
+  Options: --deep  --timeout
+
+[bold bright_cyan]aegis post pivoting <network> --ssh user@host[/bold bright_cyan]
+  SOCKS5 proxy via SSH dynamic port forwarding
+  With --scan: enumerate internal network through proxy via proxychains+nmap
+  With --forward local:remote_host:remote_port: set up port forward
+  Options: --port 1080  --scan  --forward  --timeout
+""")
+
+
 def register_tools() -> None:
     tools = discover_tools()
     groups = {"recon": recon, "vuln": vuln, "exploit": exploit, "post": post, "report": report}
