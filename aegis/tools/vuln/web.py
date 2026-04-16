@@ -178,7 +178,8 @@ def cli(
                 else:
                     for item in parse_json_lines(out):
                         path = item.get("url") or item.get("target")
-                        status = int(item.get("status", 0))
+                        status_val = item.get("status", 0)
+                        status = int(status_val) if isinstance(status_val, (int, str)) else 0
                         if path and status in (200, 201, 204, 301, 302, 403, 405):
                             dir_findings.append(str(path))
                             # Capture HTTP evidence for interesting paths

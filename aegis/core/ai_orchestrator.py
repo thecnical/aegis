@@ -328,7 +328,8 @@ class AIOrchestrator:
         if tool_name == "sqlmap":
             parsed = parse_sqlmap_output(raw_output)
             if parsed.get("vulnerable"):
-                payloads = parsed.get("payloads", [])
+                payloads_raw = parsed.get("payloads", [])
+                payloads = list(payloads_raw) if isinstance(payloads_raw, list) else []
                 dbms = parsed.get("dbms", "")
                 fid = self._store_finding(
                     title=f"SQL Injection confirmed on {self.target}",
