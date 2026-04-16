@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aegis-cli"
 version = "2.0.0"
-description = "Aegis — Modular Offensive Security Platform for penetration testing, recon, vulnerability scanning, and reporting"
+description = "AI-driven autonomous penetration testing platform — unifies recon, vulnerability scanning, exploitation, and reporting into one CLI. Real agentic decision-making, not scripted automation. 100% free and open source."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -14,9 +14,14 @@ authors = [
 ]
 keywords = [
   "security", "pentest", "penetration-testing", "offensive-security",
-  "recon", "reconnaissance", "vulnerability-scanner", "cli", "burp-suite",
-  "cve", "sarif", "github-code-scanning", "nmap", "nuclei", "sqlmap",
+  "ai", "autonomous", "agentic", "llm", "machine-learning",
+  "recon", "reconnaissance", "vulnerability-scanner", "exploit",
+  "metasploit", "nuclei", "nmap", "sqlmap", "burp-suite",
+  "cve", "sarif", "github-code-scanning", "ci-cd",
   "red-team", "ctf", "bug-bounty", "web-security", "network-security",
+  "active-directory", "bloodhound", "cloud-security", "aws", "azure", "gcp",
+  "ssrf", "xxe", "xss", "sqli", "http-smuggling", "oob",
+  "cli", "python", "automation", "devops", "devsecops",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
