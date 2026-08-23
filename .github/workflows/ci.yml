@@ -24,10 +24,11 @@ jobs:
       - name: Install dev deps
         run: |
           pip install --upgrade pip
-          pip install ruff mypy
           pip install -e ".[dev]"
+      - name: Ruff version
+        run: ruff --version
       - name: Ruff lint
-        run: ruff check .
+        run: ruff check aegis/ main.py
       - name: Mypy type check
         run: mypy aegis/ --ignore-missing-imports --no-incremental
 

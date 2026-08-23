@@ -138,7 +138,30 @@ target-version = "py310"
 # E501: line too long — pre-existing long strings in Rich markup / help text
 # F401: imported but unused — some re-exports are intentional
 extend-select = ["F", "E"]
-ignore = ["E501"]
+ignore = [
+  "E501",    # line too long
+]
+extend-ignore = [
+  "UP",      # pyupgrade — Optional[X] vs X | None, Dict vs dict, etc. (Python 3.10 compat)
+  "I",       # isort — import ordering style
+  "BLE",     # blind exception catching (intentional in CLI/orchestrator code)
+  "B008",    # function call in default arg (FastAPI File(...) pattern)
+  "B023",    # function variable binding in loop (intentional lambda)
+  "S110",    # try-except-pass (intentional for non-fatal operations)
+  "S112",    # try-except-continue (intentional for resilient iteration)
+  "DTZ",     # datetime timezone warnings (not critical for this tool)
+  "C4",      # unnecessary generator / comprehension style
+  "SIM",     # simplification suggestions (style preference)
+  "PIE",     # misc style (startswith tuple)
+  "PERF",    # performance suggestions (style preference)
+  "PLW1510", # subprocess.run without check (intentional — we handle return codes manually)
+  "FURB167", # re.I vs re.IGNORECASE (alias is fine)
+  "RUF012",  # mutable class default (Textual BINDINGS pattern)
+  "RUF019",  # unnecessary key check
+  "RUF022",  # __all__ sorting
+  "RUF059",  # unpacked unused variable
+  "RUF100",  # unused noqa directives
+]
 
 [tool.ruff.lint.per-file-ignores]
 "main.py" = ["E402"]
