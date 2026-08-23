@@ -98,31 +98,51 @@ Aegis-Devin is a modular offensive security platform that combines autonomous sc
 
 ## Installation
 
-### Requirements
+### One-Command Full Install (Recommended)
 
-- Python 3.10 or higher
-- pip package manager
-- Linux, macOS, or Windows (WSL recommended for full tool support)
-
-### Install from Source
+Works on Kali Linux, Ubuntu, Debian, Fedora, Arch, macOS. Installs EVERYTHING automatically:
 
 ```bash
 git clone https://github.com/thecnical/aegis-devin.git
 cd aegis-devin
+sudo bash setup.sh
+```
+
+This single command:
+- Installs all system packages (python3-venv, nmap, sqlmap, hydra, etc.)
+- Creates a Python virtual environment (bypasses Kali's PEP 668 "externally managed" error)
+- Installs Aegis + all Python dependencies
+- Installs Go tools (nuclei, subfinder, trufflehog, gowitness)
+- Installs Rust tools (feroxbuster)
+- Creates a global `aegis` command
+- Configures PATH
+- Validates everything
+
+After install, open a new terminal and run:
+```bash
+aegis --help
+```
+
+### Manual Install (Advanced Users)
+
+If you prefer manual control:
+
+```bash
+git clone https://github.com/thecnical/aegis-devin.git
+cd aegis-devin
+
+# Create virtual environment (REQUIRED on Kali/Debian 12+)
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install Aegis
 pip install -e .
+
+# Optional: forensics support
+pip install scapy dpkt blake3
 ```
 
-### Install from PyPI
-
-```bash
-pip install aegis-devin
-```
-
-### Install with Forensics Support
-
-```bash
-pip install aegis-devin[forensics]
-```
+> **Important:** On Kali Linux / Debian 12+ / Ubuntu 23.04+, you CANNOT use `pip install` directly. You MUST use a virtual environment or `sudo bash setup.sh`.
 
 ### Verify Installation
 
