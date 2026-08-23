@@ -486,11 +486,18 @@ def _show_first_run_hints(ctx: AegisContext) -> None:
     ux = config_data.get("ux", {}) or {}
     if ux.get("first_run_hint_shown"):
         return
-    console.print(
-        "[accent]First-run hints:[/accent] "
-        "`aegis ai doctor --strict` validates AI readiness, "
-        "`aegis web-assess --target <url>` runs resumable authorized workflows."
-    )
+
+    # Check if AI keys are configured — if not, run the setup wizard
+    from aegis.core.first_run import needs_first_run, run_first_time_setup
+    if needs_first_run(ctx.config):
+        run_first_time_setup(ctx.config)
+    else:
+        console.print(
+            "[accent]First-run hints:[/accent] "
+            "`aegis ai doctor --strict` validates AI readiness, "
+            "`aegis web-assess --target <url>` runs resumable authorized workflows."
+        )
+
     ux["first_run_hint_shown"] = True
     config_data["ux"] = ux
     ctx.config.save(config_data)
@@ -2914,7 +2921,9 @@ def uni_cmd(ctx: AegisContext, assume_yes: bool, dry_run: bool, keep_data: bool,
 # ─── api-key setup ────────────────────────────────────────────────────────────
 
 @cli.command("configure-keys")
-@click.option("--openrouter", default=None, help="OpenRouter API key (free: openrouter.ai/keys).")
+@click.option("--opencode-zen", "opencode_zen", default=None, help="OpenCode Zen API key (free: opencode.ai/zen).")
+@click.option("--nvidia", default=None, help="NVIDIA NIM API key (free: build.nvidia.com).")
+@click.option("--groq", default=None, help="Groq API key (free: console.groq.com/keys).")
 @click.option("--bytez", default=None, help="Bytez API key (free: bytez.com).")
 @click.option("--shodan", default=None, help="Shodan API key (free tier: shodan.io).")
 @click.option("--nvd", default=None, help="NVD API key (free: nvd.nist.gov/developers).")
@@ -2924,7 +2933,9 @@ def uni_cmd(ctx: AegisContext, assume_yes: bool, dry_run: bool, keep_data: bool,
 @pass_context
 def configure_keys_cmd(
     ctx: AegisContext,
-    openrouter: Optional[str],
+    opencode_zen: Optional[str],
+    nvidia: Optional[str],
+    groq: Optional[str],
     bytez: Optional[str],
     shodan: Optional[str],
     nvd: Optional[str],
@@ -2940,10 +2951,12 @@ def configure_keys_cmd(
 
     \\b
     Free key URLs:
-      OpenRouter:  https://openrouter.ai/keys
-      Bytez:       https://bytez.com
-      Shodan:      https://shodan.io (free tier)
-      NVD:         https://nvd.nist.gov/developers/request-an-api-key
+      OpenCode Zen: https://opencode.ai/zen
+      NVIDIA NIM:   https://build.nvidia.com
+      Groq:         https://console.groq.com/keys
+      Bytez:        https://bytez.com
+      Shodan:       https://shodan.io (free tier)
+      NVD:          https://nvd.nist.gov/developers/request-an-api-key
     """
     config_data = ctx.config.load()
     api_keys = config_data.get("api_keys", {}) or {}
@@ -2962,7 +2975,9 @@ def configure_keys_cmd(
         elif value is not None:
             key_dict[name] = value
 
-    _set_key(api_keys, "openrouter", openrouter, "OpenRouter API key (https://openrouter.ai/keys)")
+    _set_key(api_keys, "opencode_zen", opencode_zen, "OpenCode Zen key (https://opencode.ai/zen)")
+    _set_key(api_keys, "nvidia", nvidia, "NVIDIA NIM key (https://build.nvidia.com)")
+    _set_key(api_keys, "groq", groq, "Groq key (https://console.groq.com/keys)")
     _set_key(api_keys, "bytez", bytez, "Bytez API key (https://bytez.com)")
     _set_key(api_keys, "shodan", shodan, "Shodan API key")
     _set_key(api_keys, "nvd", nvd, "NVD API key")
@@ -2979,7 +2994,9 @@ def configure_keys_cmd(
     table.add_column("Configured", style="green")
     table.add_column("URL", style="dim")
     key_urls = {
-        "openrouter": "https://openrouter.ai/keys",
+        "opencode_zen": "https://opencode.ai/zen",
+        "nvidia": "https://build.nvidia.com",
+        "groq": "https://console.groq.com/keys",
         "bytez": "https://bytez.com",
         "shodan": "https://shodan.io",
         "nvd": "https://nvd.nist.gov/developers",

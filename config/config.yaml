@@ -1,152 +1,103 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Aegis Configuration
-# Created by Chandan Pandey
-# Docs: https://github.com/thecnical/aegis
-# ─────────────────────────────────────────────────────────────────────────────
-
 general:
-  data_path: "data"
-  db_path: "data/aegis.db"
+  data_path: data
+  db_path: data/aegis.db
   default_timeout: 30
   safe_mode: true
   http_timeout: 15
   http_retries: 3
   http_backoff: 0.3
-  report_template: ""
-  report_template_html: ""
-  brand: "Chandan Pandey"
-  workspace: "default"
-  screenshot_path: "data/screenshots"
+  report_template: ''
+  report_template_html: ''
+  brand: Chandan Pandey
+  workspace: default
+  screenshot_path: data/screenshots
   report_custom_sections:
-    - title: "Engagement Notes"
-      body: "Add scope, exclusions, and testing notes here."
-    - title: "Remediation Guidance"
-      body: "Add remediation checklist here."
-  wordlists_path: "data/wordlists"
-  wordlists_repo: "https://github.com/danielmiessler/SecLists.git"
+  - title: Engagement Notes
+    body: Add scope, exclusions, and testing notes here.
+  - title: Remediation Guidance
+    body: Add remediation checklist here.
+  wordlists_path: data/wordlists
+  wordlists_repo: https://github.com/danielmiessler/SecLists.git
   team_workspace_enforcement: true
   ci_deterministic_output: true
   ci_exit_on_high: true
-
 workflow:
   workers: 4
   rate_limit_per_sec: 5
   retries: 1
   require_cross_validation: false
   dangerous_checks: false
-
-# ─── API Keys ─────────────────────────────────────────────────────────────────
-# All services below have free tiers — no paid subscription required.
 api_keys:
-  shodan: "CHANGE_ME"
-  openrouter: "CHANGE_ME"   # https://openrouter.ai/keys  (free tier)
-  bytez: "CHANGE_ME"        # https://bytez.com           (free tier)
-  nvd: "CHANGE_ME"          # https://nvd.nist.gov/developers/request-an-api-key (free)
-
-# ─── Notifications ────────────────────────────────────────────────────────────
+  shodan: CHANGE_ME
+  opencode_zen: CHANGE_ME
+  nvidia: CHANGE_ME
+  bytez: CHANGE_ME
+  nvd: CHANGE_ME
 notifications:
-  slack_webhook: ""         # https://api.slack.com/messaging/webhooks
-  discord_webhook: ""       # Server Settings → Integrations → Webhooks
-
-# ─── Scan Profiles ────────────────────────────────────────────────────────────
+  slack_webhook: ''
+  discord_webhook: ''
 profiles:
   default:
     timeout: 30
-    nmap_args: "-sC -sV"
+    nmap_args: -sC -sV
     nuclei_rate: 150
     ferox_depth: 2
   fast:
     timeout: 10
-    nmap_args: "-sS"
+    nmap_args: -sS
     nuclei_rate: 300
     ferox_depth: 1
   deep:
     timeout: 90
-    nmap_args: "-sC -sV -A -O --script=vuln"
+    nmap_args: -sC -sV -A -O --script=vuln
     nuclei_rate: 50
     ferox_depth: 4
   stealth:
     timeout: 120
-    nmap_args: "-sS -T2 --randomize-hosts"
+    nmap_args: -sS -T2 --randomize-hosts
     nuclei_rate: 20
     ferox_depth: 2
   web-fast:
     timeout: 12
-    nmap_args: "-sS -Pn"
+    nmap_args: -sS -Pn
     nuclei_rate: 350
     ferox_depth: 1
   web-deep:
     timeout: 90
-    nmap_args: "-sC -sV -A -O --script=vuln"
+    nmap_args: -sC -sV -A -O --script=vuln
     nuclei_rate: 80
     ferox_depth: 5
   api-deep:
     timeout: 75
-    nmap_args: "-sV -Pn"
+    nmap_args: -sV -Pn
     nuclei_rate: 120
     ferox_depth: 3
-
 ai:
-  preferred_provider: "auto"
-  default_profile: "web-fast"
-
-# ─── External Tools ───────────────────────────────────────────────────────────
-# Values are the command name (if on PATH) or an absolute path.
-# Run `aegis doctor --fix` to auto-detect and update all paths.
+  preferred_provider: auto
+  default_profile: web-fast
 external_tools:
-
-  # ── Core ──────────────────────────────────────────────────────────────────
-  nmap: "nmap"
-  netcat: "nc"
-  git: "git"
-  curl: "curl"
-
-  # ── Recon ─────────────────────────────────────────────────────────────────
-  # Installed by: go install github.com/projectdiscovery/subfinder/...@latest
-  subfinder: "subfinder"
-  # Installed by: go install github.com/owasp-amass/amass/v4/...@master
-  amass: "amass"
-  # Installed by: sudo apt install theharvester
-  theHarvester: "theHarvester"
-
-  # ── Vulnerability Scanning ────────────────────────────────────────────────
-  # Installed by: go install github.com/projectdiscovery/nuclei/v3/...@latest
-  nuclei: "nuclei"
-  # Installed by: cargo install feroxbuster
-  feroxbuster: "feroxbuster"
-  # Installed by: sudo apt install nikto
-  nikto: "nikto"
-  # Installed by: sudo apt install ffuf  OR  go install github.com/ffuf/ffuf/v2@latest
-  ffuf: "ffuf"
-  # Installed by: sudo apt install testssl.sh  OR  download from testssl.sh
-  # doctor will also check data/tools/testssl.sh
-  testssl: "testssl.sh"
-
-  # ── Exploitation ──────────────────────────────────────────────────────────
-  sqlmap: "sqlmap"
-  hydra: "hydra"
-  metasploit: "msfconsole"
-
-  # ── Post-Exploitation ─────────────────────────────────────────────────────
-  smbclient: "smbclient"
-  # linpeas/winpeas: downloaded to data/tools/ by `aegis install-tools --peas`
-  # doctor checks data/tools/linpeas.sh automatically
-  linpeas: "linpeas.sh"
-  winpeas: "winpeas.exe"
-
-  # ── Tech Detection (free, no API key) ─────────────────────────────────────
-  # Installed by: pip install webtech  (or auto-installed into .venv)
-  webtech: "webtech"
-  # Pre-installed on Kali; also: sudo apt install whatweb
-  whatweb: "whatweb"
-
-  # ── Screenshots ───────────────────────────────────────────────────────────
-  # Installed by: go install github.com/sensepost/gowitness@latest
-  gowitness: "gowitness"
-
-  # ── Secret Scanning ───────────────────────────────────────────────────────
-  # Installed by: go install github.com/trufflesecurity/trufflehog/v3@latest
-  trufflehog: "trufflehog"
-
-  # ── OSINT ─────────────────────────────────────────────────────────────────
-  shodan: "shodan"
+  nmap: nmap
+  netcat: nc
+  git: git
+  curl: curl
+  subfinder: subfinder
+  amass: amass
+  theHarvester: theHarvester
+  nuclei: nuclei
+  feroxbuster: feroxbuster
+  nikto: nikto
+  ffuf: ffuf
+  testssl: testssl.sh
+  sqlmap: sqlmap
+  hydra: hydra
+  metasploit: msfconsole
+  smbclient: smbclient
+  linpeas: linpeas.sh
+  winpeas: winpeas.exe
+  webtech: webtech
+  whatweb: whatweb
+  gowitness: gowitness
+  trufflehog: trufflehog
+  shodan: shodan
+ux:
+  first_run_hint_shown: true

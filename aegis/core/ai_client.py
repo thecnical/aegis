@@ -25,6 +25,7 @@ from aegis.core.ui import console
 # nvidia is second — 100+ models free, no CC required.
 # llm7 is third — no registration needed, truly zero-friction.
 # cloudflare is fourth — global edge, free tier.
+# opencode is fifth — OpenCode Zen gateway, free models available.
 # bytez is last fallback.
 MODEL_PREFERENCES: dict[str, list[str]] = {
     "triage": [
@@ -32,6 +33,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/meta/llama-3.3-70b-instruct",
         "llm7/llama-3.3-70b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "opencode/big-pickle",
         "bytez/mistral-7b-instruct",
     ],
     "summarize": [
@@ -39,6 +41,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/meta/llama-3.1-8b-instruct",
         "llm7/llama-3.1-8b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.1-8b-instruct",
+        "opencode/big-pickle",
         "bytez/llama-3-8b-instruct",
     ],
     "suggest": [
@@ -46,6 +49,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/qwen/qwen2.5-72b-instruct",
         "llm7/qwen2.5-72b-instruct:turbo",
         "cloudflare/@cf/qwen/qwen2.5-72b-instruct",
+        "opencode/big-pickle",
         "bytez/mistral-7b-instruct",
     ],
     "report": [
@@ -53,6 +57,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/meta/llama-3.3-70b-instruct",
         "llm7/llama-3.3-70b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "opencode/big-pickle",
         "bytez/llama-3-8b-instruct",
     ],
     "chat": [
@@ -60,6 +65,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/meta/llama-3.1-70b-instruct",
         "llm7/llama-3.1-70b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.1-70b-instruct",
+        "opencode/big-pickle",
         "bytez/mistral-7b-instruct",
     ],
     # Forensics-specific tasks
@@ -68,6 +74,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/nvidia/llama-3.1-nemotron-70b-instruct",
         "llm7/llama-3.3-70b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "opencode/big-pickle",
         "bytez/llama-3-8b-instruct",
     ],
     "forensics_redteam": [
@@ -75,6 +82,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/nvidia/llama-3.1-nemotron-70b-instruct",
         "llm7/qwen2.5-72b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "opencode/big-pickle",
         "bytez/mistral-7b-instruct",
     ],
     "forensics_timeline": [
@@ -82,6 +90,7 @@ MODEL_PREFERENCES: dict[str, list[str]] = {
         "nvidia/meta/llama-3.1-8b-instruct",
         "llm7/llama-3.1-8b-instruct:turbo",
         "cloudflare/@cf/meta/llama-3.1-8b-instruct",
+        "opencode/big-pickle",
         "bytez/llama-3-8b-instruct",
     ],
 }
@@ -103,7 +112,7 @@ class AIClient:
     LLM7_BASE = "https://api.llm7.io/v1"
     CLOUDFLARE_BASE = "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1"
     BYTEZ_BASE = "https://api.bytez.com/models/v2"
-    OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+    OPENCODE_ZEN_BASE = "https://opencode.ai/zen/v1"
 
     def __init__(self, config: ConfigManager, db: DatabaseManager) -> None:
         self._config = config
@@ -137,8 +146,8 @@ class AIClient:
     def _bytez_key(self) -> Optional[str]:
         return self._key("bytez")
 
-    def _openrouter_key(self) -> Optional[str]:
-        return self._key("openrouter")
+    def _opencode_zen_key(self) -> Optional[str]:
+        return self._key("opencode_zen")
 
     # ── Provider availability ─────────────────────────────────────────────────
 
@@ -153,8 +162,8 @@ class AIClient:
             return bool(self._cloudflare_key() and self._cloudflare_account())
         if provider == "bytez":
             return bool(self._bytez_key())
-        if provider == "openrouter":
-            return bool(self._openrouter_key())
+        if provider == "openrouter" or provider == "opencode":
+            return bool(self._opencode_zen_key())
         return False
 
     def select_model(self, task: str) -> str:
@@ -216,10 +225,10 @@ class AIClient:
             return self._call_cloudflare(model_name, prompt)
         if provider == "bytez":
             return self._call_bytez(model_name, prompt)
-        if provider == "openrouter":
+        if provider == "openrouter" or provider == "opencode":
             return self._call_openai_compat(
-                self.OPENROUTER_BASE, model_name, prompt,
-                bearer=self._openrouter_key(),
+                self.OPENCODE_ZEN_BASE, model_name, prompt,
+                bearer=self._opencode_zen_key(),
             )
         raise RuntimeError(f"Unknown provider: {provider}")
 

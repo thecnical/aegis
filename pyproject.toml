@@ -161,6 +161,7 @@ extend-ignore = [
   "RUF022",  # __all__ sorting
   "RUF059",  # unpacked unused variable
   "RUF100",  # unused noqa directives
+  "FLY",     # flynt string join style (preference)
 ]
 
 [tool.ruff.lint.per-file-ignores]
