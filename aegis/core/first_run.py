@@ -101,7 +101,7 @@ def run_first_time_setup(config: ConfigManager) -> None:
     t.add_column("Get Key", style="green", width=35)
 
     for i, p in enumerate(PROVIDERS, 1):
-        t.add_row(str(i), p["name"], p["description"], p["url"])
+        t.add_row(str(i), str(p["name"]), str(p["description"]), str(p["url"]))
     console.print(t)
     console.print()
 
@@ -111,9 +111,9 @@ def run_first_time_setup(config: ConfigManager) -> None:
     api_keys = config_data.get("api_keys", {}) or {}
 
     for provider in PROVIDERS:
-        name = provider["name"]
-        key_name = provider["key_name"]
-        url = provider["url"]
+        name = str(provider["name"])
+        key_name = str(provider["key_name"])
+        url = str(provider["url"])
 
         if _is_configured(config, key_name):
             console.print(f"  [green]✓[/green] {name}: already configured")

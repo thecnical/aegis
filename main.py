@@ -662,7 +662,7 @@ def ai_doctor(ctx: AegisContext, strict: bool) -> None:
 
     endpoint_hosts = {
         "bytez": urlparse(AIClient.BYTEZ_BASE).hostname or "",
-        "openrouter": urlparse(AIClient.OPENROUTER_BASE).hostname or "",
+        "opencode_zen": urlparse(AIClient.OPENCODE_ZEN_BASE).hostname or "",
     }
     endpoint_dns: dict[str, bool] = {}
     for provider, host in endpoint_hosts.items():
