@@ -96,7 +96,7 @@ def _create_default_config(config_path: str) -> None:
         "  default_timeout: 30\n"
         "  safe_mode: true\n"
         "api_keys:\n"
-        "  openrouter: CHANGE_ME\n"
+        "  opencode_zen: CHANGE_ME\n"
         "  bytez: CHANGE_ME\n"
         "  shodan: CHANGE_ME\n"
         "  nvd: CHANGE_ME\n"
@@ -456,7 +456,7 @@ def _prompt_ai_onboarding(config: ConfigManager) -> bool:
 
     provider = click.prompt(
         "Preferred AI provider",
-        type=click.Choice(["auto", "bytez", "openrouter"], case_sensitive=False),
+        type=click.Choice(["auto", "bytez", "opencode_zen"], case_sensitive=False),
         default="auto",
         show_choices=True,
     ).lower()
@@ -471,10 +471,10 @@ def _prompt_ai_onboarding(config: ConfigManager) -> bool:
         if click.confirm("Set/update Bytez API key?", default=not _is_configured_secret(current)):
             api_keys["bytez"] = click.prompt("Bytez API key", default=current, hide_input=True, show_default=False)
 
-    if provider in ("auto", "openrouter"):
-        current = str(api_keys.get("openrouter", "CHANGE_ME"))
-        if click.confirm("Set/update OpenRouter API key?", default=not _is_configured_secret(current)):
-            api_keys["openrouter"] = click.prompt("OpenRouter API key", default=current, hide_input=True, show_default=False)
+    if provider in ("auto", "opencode_zen"):
+        current = str(api_keys.get("opencode_zen", "CHANGE_ME"))
+        if click.confirm("Set/update OpenCode Zen API key?", default=not _is_configured_secret(current)):
+            api_keys["opencode_zen"] = click.prompt("OpenCode Zen key (https://opencode.ai/zen)", default=current, hide_input=True, show_default=False)
 
     config_data["api_keys"] = api_keys
     config.save(config_data)
@@ -658,7 +658,9 @@ def ai_doctor(ctx: AegisContext, strict: bool) -> None:
     preferred = str(ai_cfg.get("preferred_provider", "auto")).lower()
     keys = config_data.get("api_keys", {}) or {}
     bytez_ready = _is_configured_secret(keys.get("bytez"))
-    openrouter_ready = _is_configured_secret(keys.get("openrouter"))
+    opencode_ready = _is_configured_secret(keys.get("opencode_zen"))
+    nvidia_ready = _is_configured_secret(keys.get("nvidia"))
+    groq_ready = _is_configured_secret(keys.get("groq"))
 
     endpoint_hosts = {
         "bytez": urlparse(AIClient.BYTEZ_BASE).hostname or "",
@@ -675,15 +677,26 @@ def ai_doctor(ctx: AegisContext, strict: bool) -> None:
         except OSError:
             endpoint_dns[provider] = False
 
+    any_ai_ready = bytez_ready or opencode_ready or nvidia_ready or groq_ready
+
     task_ready: dict[str, bool] = {}
     for task, models in MODEL_PREFERENCES.items():
         ready = False
         for model in models:
-            provider, _ = model.split("/", 1)
+            provider = model.split("/", 1)[0]
             if provider == "bytez" and bytez_ready:
                 ready = True
                 break
-            if provider == "openrouter" and openrouter_ready:
+            if provider == "opencode" and opencode_ready:
+                ready = True
+                break
+            if provider == "nvidia" and nvidia_ready:
+                ready = True
+                break
+            if provider == "groq" and groq_ready:
+                ready = True
+                break
+            if provider == "llm7":
                 ready = True
                 break
         task_ready[task] = ready
@@ -693,9 +706,9 @@ def ai_doctor(ctx: AegisContext, strict: bool) -> None:
     default_profile = str(ai_cfg.get("default_profile", "default"))
     profile_ready = default_profile in profiles
     preferred_ready = (
-        (preferred == "auto" and (bytez_ready or openrouter_ready))
+        (preferred == "auto" and any_ai_ready)
         or (preferred == "bytez" and bytez_ready)
-        or (preferred == "openrouter" and openrouter_ready)
+        or (preferred == "opencode_zen" and opencode_ready)
     )
     issues: list[str] = []
     if not preferred_ready:
@@ -710,21 +723,20 @@ def ai_doctor(ctx: AegisContext, strict: bool) -> None:
     table.add_column("Status", style="magenta")
     table.add_column("Details", style="white")
     table.add_row("Preferred provider", preferred, "Configured in ai.preferred_provider")
+    table.add_row("Groq key", "[green]ok[/green]" if groq_ready else "[yellow]missing[/yellow]", "api_keys.groq")
+    table.add_row("NVIDIA key", "[green]ok[/green]" if nvidia_ready else "[yellow]missing[/yellow]", "api_keys.nvidia")
+    table.add_row("OpenCode Zen key", "[green]ok[/green]" if opencode_ready else "[yellow]missing[/yellow]", "api_keys.opencode_zen")
     table.add_row("Bytez key", "[green]ok[/green]" if bytez_ready else "[yellow]missing[/yellow]", "api_keys.bytez")
-    table.add_row(
-        "OpenRouter key",
-        "[green]ok[/green]" if openrouter_ready else "[yellow]missing[/yellow]",
-        "api_keys.openrouter",
-    )
+    table.add_row("LLM7 (no key needed)", "[green]ok[/green]", "Always available (anonymous)")
     table.add_row(
         "Bytez endpoint DNS",
-        "[green]ok[/green]" if endpoint_dns["bytez"] else "[yellow]unresolved[/yellow]",
-        endpoint_hosts["bytez"],
+        "[green]ok[/green]" if endpoint_dns.get("bytez") else "[yellow]unresolved[/yellow]",
+        endpoint_hosts.get("bytez", ""),
     )
     table.add_row(
-        "OpenRouter endpoint DNS",
-        "[green]ok[/green]" if endpoint_dns["openrouter"] else "[yellow]unresolved[/yellow]",
-        endpoint_hosts["openrouter"],
+        "OpenCode Zen endpoint DNS",
+        "[green]ok[/green]" if endpoint_dns.get("opencode_zen") else "[yellow]unresolved[/yellow]",
+        endpoint_hosts.get("opencode_zen", ""),
     )
     table.add_row(
         "Model fallback readiness",
@@ -2479,7 +2491,7 @@ def _help_config() -> None:
 
 [bold bright_cyan]api_keys:[/bold bright_cyan]
   shodan: CHANGE_ME               [dim]# https://shodan.io (free tier)[/dim]
-  openrouter: CHANGE_ME           [dim]# https://openrouter.ai (free tier) — for AI features[/dim]
+  opencode_zen: CHANGE_ME        [dim]# https://opencode.ai/zen (free) — for AI features[/dim]
   bytez: CHANGE_ME                [dim]# https://bytez.com (free tier) — for AI features[/dim]
   nvd: CHANGE_ME                  [dim]# https://nvd.nist.gov (free) — for CVE correlation[/dim]
 
@@ -2608,8 +2620,10 @@ def _help_ai() -> None:
   Options: --strict (exit non-zero if degraded)
 
 [bold bright_cyan]AI providers (free tiers):[/bold bright_cyan]
-  OpenRouter: https://openrouter.ai/keys
-  Bytez:      https://bytez.com
+  OpenCode Zen: https://opencode.ai/zen
+  NVIDIA NIM:   https://build.nvidia.com
+  Groq:         https://console.groq.com/keys
+  Bytez:        https://bytez.com
   Add keys to config/config.yaml under api_keys
   Use [bold]aegis setup --wizard[/bold] for guided onboarding
 """)
