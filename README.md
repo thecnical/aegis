@@ -1,1030 +1,1077 @@
-<p align="center">
-  <img src="assets/aegis_whitepaper_mockup.png" alt="Aegis-Devin Platform Banner" width="100%">
-</p>
+# ⚔ AEGIS-DEVIN v3.0.0
 
-<div align="center">
+### AI-Driven Autonomous Penetration Testing & Network Forensics Platform
 
-```
- ░█████╗░███████╗░██████╗░██╗░██████╗    ██████╗░███████╗██╗░░░██╗██╗███╗░░██╗
- ██╔══██╗██╔════╝██╔════╝░██║██╔════╝    ██╔══██╗██╔════╝██║░░░██║██║████╗░██║
- ███████║█████╗░░██║░░██╗░██║╚█████╗░    ██║░░██║█████╗░░╚██╗░██╔╝██║██╔██╗██║
- ██╔══██║██╔══╝░░██║░░╚██╗██║░╚═══██╗    ██║░░██║██╔══╝░░░╚████╔╝░██║██║╚████║
- ██║░░██║███████╗╚██████╔╝██║██████╔╝    ██████╔╝███████╗░░╚██╔╝░░██║██║░╚███║
- ╚═╝░░╚═╝╚══════╝░╚═════╝░╚═╝╚═════╝    ╚═════╝░╚══════╝░░░╚═╝░░░╚═╝╚═╝░░╚══╝
-```
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-3.0.0-brightgreen.svg)]()
 
-### ⚔ Aegis-Devin — AI Autonomous Penetration Testing + Network Forensics Platform ⚔
+> **One CLI. Every phase. Real AI. Self-Learning. Zero Cost.**
 
-> *One command. Every phase. Real agentic AI intelligence.*
-> *World's most advanced autonomous red team + network forensics CLI.*
-
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
-[![CI](https://github.com/thecnical/aegis-devin/actions/workflows/ci.yml/badge.svg?style=for-the-badge)](https://github.com/thecnical/aegis-devin/actions)
-[![Version](https://img.shields.io/badge/Version-2.2.0-blueviolet?style=for-the-badge)](https://github.com/thecnical/aegis-devin/releases)
-[![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-557C94?style=for-the-badge&logo=linux&logoColor=white)](https://kali.org)
-[![PyPI](https://img.shields.io/badge/PyPI-aegis--devin-blue?style=for-the-badge&logo=pypi)](https://pypi.org/project/aegis-devin/)
-
-[![Ruff](https://img.shields.io/badge/code%20style-ruff-orange?style=flat-square)](https://github.com/astral-sh/ruff)
-[![mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square)](https://mypy-lang.org)
-[![Security](https://img.shields.io/badge/security-bandit-yellow?style=flat-square)](https://github.com/PyCQA/bandit)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat-square&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/chandanpandit)
+Aegis-Devin is a modular offensive security platform that combines autonomous scanning, AI-powered decision making, network forensics, self-learning intelligence, and exploit chain analysis into a single CLI tool. All AI features run on **free API providers** — no credit card required.
 
 ---
 
-```
-  ┌─────────────────────────────────────────────────────────────────────────┐
-  │  Aegis-Devin  ·  AI Autonomous Pentest  ·  Network Forensics  ·  Free  │
-  │  Recon → Vuln → Exploit → Post → Forensics → Report                    │
-  │  AI selects tools. AI reads output. AI decides next. AI writes report.  │
-  │  15+ Attack Modules  ·  10+ WAF Vendors  ·  100% Free & Open Source    │
-  └─────────────────────────────────────────────────────────────────────────┘
-```
+## Table of Contents
 
-```bash
-# Full autonomous AI pentest — one command
-aegis ai auto --target example.com --full --format html
-
-# AI-driven network forensics — capture + analyze + report
-aegis forensics capture --interface eth0 --ai-analyze
-
-# Autonomous red team against internal network
-aegis forensics redteam --target 192.168.1.0/24 --full
-```
-
-> **Legal Notice:** For authorized penetration testing and security research only.
-> Using against systems you do not own or have explicit written permission to test is illegal.
-
-</div>
-
----
-
-## Resources
-
-### Architecture Mind Map
-
-> Full attack-surface breakdown — every phase, every tool, every data flow — in one diagram.
-
-<p align="center">
-  <img src="assets/notebooklm_mind_map.png" alt="Aegis Architecture Mind Map" width="100%">
-</p>
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [AI Integration](#ai-integration)
+- [Command Reference](#command-reference)
+  - [Scope Management](#scope-management)
+  - [Reconnaissance](#reconnaissance)
+  - [Vulnerability Scanning](#vulnerability-scanning)
+  - [Exploitation](#exploitation)
+  - [AI Commands](#ai-commands)
+  - [MITRE ATT&CK](#mitre-attck)
+  - [Exploit Chain Analysis](#exploit-chain-analysis)
+  - [Network Forensics](#network-forensics)
+  - [Self-Learning Engine](#self-learning-engine)
+  - [Adaptive Monitoring](#adaptive-monitoring)
+  - [Reporting](#reporting)
+  - [CVE Correlation](#cve-correlation)
+  - [Campaign Management](#campaign-management)
+  - [REST API](#rest-api)
+  - [Workspace Management](#workspace-management)
+  - [Configuration](#configuration)
+- [Scan Profiles](#scan-profiles)
+- [External Tools](#external-tools)
+- [Security Considerations](#security-considerations)
+- [Contributing](#contributing)
+- [Author](#author)
 
 ---
 
-### Presentation & Whitepaper
-
-<table align="center">
-  <tr>
-    <td align="center" width="50%">
-      <a href="Aegis_Autonomous_Security.pdf">
-        <img src="assets/aegis_whitepaper_mockup.png" alt="Aegis Whitepaper PDF" width="100%">
-      </a>
-      <br/>
-      <strong>📄 Whitepaper / PDF</strong><br/>
-      <a href="Aegis_Autonomous_Security.pdf">View PDF →</a>
-    </td>
-    <td align="center" width="50%">
-      <a href="Aegis_Autonomous_Security.pptx">
-        <img src="assets/aegis_presentation_mockup.png" alt="Aegis Presentation PPTX" width="100%">
-      </a>
-      <br/>
-      <strong>📊 Slide Deck / PPTX</strong><br/>
-      <a href="Aegis_Autonomous_Security.pptx">Download Slides →</a>
-    </td>
-  </tr>
-</table>
-
----
-
-## Overview
-
-**Aegis** is a modular, AI-driven penetration testing platform that unifies the complete offensive security lifecycle into a single CLI tool. Instead of managing a dozen separate tools with incompatible output formats, Aegis wraps them all — Nmap, Nuclei, ffuf, sqlmap, theHarvester, subfinder, and more — behind one consistent interface backed by a shared SQLite database, workspace isolation, and AI orchestration.
-
-Every finding from every tool lands in the same database. Every scan runs inside a named workspace. Every result can be exported as a PDF report, a SARIF file for GitHub Code Scanning, or a JSON feed for CI/CD pipelines.
-
-```bash
-# Full autonomous pentest — recon, vuln scan, AI triage, report
-aegis ai auto --target example.com --format html
-```
-
-### Who is it for?
-
-| Audience | Use case |
-|---|---|
-| Penetration testers | Unified workflow — no more scattered terminal windows |
-| Bug bounty hunters | Fast recon-to-report pipelines |
-| Red teams | Parallel campaigns across many targets |
-| Security engineers | Vulnerability scanning integrated into CI/CD |
-| CTF players | AI-assisted attack surface analysis |
-
----
-
-## Features
+## Key Features
 
 | Feature | Description |
-|---|---|
-| **Autonomous AI Mode** | Real agentic loop: nmap → parse services → AI selects tools → run → parse → AI next action |
-| **AI Payload Execution** | Generates AND actually sends SQLi/XSS/LFI/SSRF payloads, checks responses for confirmation |
-| **HTTP Evidence Capture** | Every nuclei finding stores full HTTP request + response status + body snippet |
-| **WAF Detection** | Detects 10+ WAF vendors (Cloudflare, AWS WAF, Akamai, ModSecurity, etc.) before exploiting |
-| **Hydra Brute-Force** | Real credential testing via Hydra against SSH, FTP, MySQL, RDP, SMB, HTTP |
-| **Authenticated Scanning** | Pass `--cookies` and `--header` to nuclei and feroxbuster for post-login scanning |
-| **Metasploit Integration** | Auto-maps Nuclei findings to MSF modules, runs via resource scripts or RPC API |
-| **HTTP Request Smuggling** | Raw socket-based CL.TE, TE.CL, TE.TE detection with timing + content analysis |
-| **Cloud Asset Discovery** | Finds exposed S3, Azure Blob, GCP Storage buckets via permutation + DNS detection |
-| **Active Directory Enum** | BloodHound, ldapdomaindump, CrackMapExec, anonymous rpcclient enumeration |
-| **OOB SSRF/XXE Detection** | interactsh-based DNS/HTTP callback detection for blind SSRF and XXE |
-| **Secret Extraction** | `trufflehog` scans JS files, git repos, and local paths for exposed credentials |
-| **Screenshot Capture** | `gowitness` auto-screenshots all discovered web services; images in HTML reports |
-| **Attack Path Graph** | Interactive D3.js force-directed graph in HTML reports |
-| **MCP Server** | Exposes Aegis as an MCP tool server — Claude, Cursor can drive full pentests |
-| **Burp Suite Import** | XXE-safe XML parsing, base64 decoding, findings stored with full HTTP evidence |
-| **CVE Correlation** | Queries NVD API v2, stores CVSS v3.1 scores and vectors per finding |
-| **SARIF Export** | SARIF v2.1.0 with rule IDs, OWASP URIs, GitHub security-severity scores |
-| **Parallel Campaigns** | `asyncio`-based runner — each target gets its own session, results aggregated |
-| **PostgreSQL Support** | Use `db_path: postgresql://...` for team/concurrent use |
-| **Workspace Isolation** | Each engagement has its own SQLite database — zero cross-engagement data leakage |
-| **Scope Enforcement** | Every target checked against scope before any tool runs |
-| **100% Free** | No paid APIs required — all tools are open source |
-
----
-
-## Strategic Vision
-
-Aegis is built on a foundation of autonomous strategy and modular integration. The following Mind Map provides a comprehensive overview of the platform's core identity, key features, and future trajectory.
-
-<p align="center">
-  <img src="assets/notebooklm_mind_map.png" alt="Aegis Autonomous Security Mind Map" width="100%">
-</p>
-
----
-
-## Documentation & Strategic Resources
-
-Explore the theoretical and tactical foundations of Aegis through our dedicated security whitepaper and executive presentation.
-
-<div align="center">
-
-| **Autonomous Security Whitepaper** | **Executive Strategic Deck** |
-|:---:|:---:|
-| [![Aegis Whitepaper](assets/aegis_whitepaper_mockup.png)](Aegis_Autonomous_Security.pdf) | [![Aegis Presentation](assets/aegis_presentation_mockup.png)](Aegis_Autonomous_Security.pptx) |
-| [📄 Download PDF](Aegis_Autonomous_Security.pdf) | [📊 Download PPTX](Aegis_Autonomous_Security.pptx) |
-
-</div>
+|---------|-------------|
+| **AI Autonomous Pentest** | One command runs full recon → vuln → exploit → report cycle with AI decision-making |
+| **Self-Learning Engine** | Remembers targets, builds profiles, tracks tool effectiveness, detects drift between scans |
+| **Exploit Chain Analysis** | Automatically connects individual vulnerabilities into multi-step attack paths |
+| **MITRE ATT&CK Mapping** | Maps all findings to 82 ATT&CK techniques across 14 tactics with kill chain visualization |
+| **Network Forensics** | Deep PCAP analysis with C2 beacon detection, DNS tunneling, exfiltration heuristics |
+| **Anomaly Detection** | Statistical baseline modeling with Z-score deviation, port scan detection, ARP spoofing |
+| **Passive OSINT** | Certificate Transparency, Wayback Machine, favicon hashing, JS endpoint extraction |
+| **Adaptive Monitoring** | Self-tuning continuous scanner that adapts frequency based on target volatility |
+| **Multi-Provider AI** | Automatic fallback across Groq, NVIDIA NIM, LLM7, Cloudflare, Bytez, OpenRouter |
+| **REST API** | FastAPI server for CI/CD integration with rate limiting and auth |
+| **SARIF Export** | GitHub Code Scanning integration |
+| **Evidence Chain** | SHA-256 + BLAKE3 tamper-evident hash chain for forensic captures |
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  CLI Layer  (Click — main.py)                                    │
-│  recon · vuln · exploit · ai · burp · cve · campaign · report   │
-├──────────────────────────────────────────────────────────────────┤
-│  Core Layer  (aegis/core/)                                       │
-│  AIOrchestrator · CampaignRunner · BurpImporter                  │
-│  CVECorrelator · SARIFExporter · TemplateManager · Notifier      │
-├──────────────────────────────────────────────────────────────────┤
-│  Tools Layer  (aegis/tools/)                                     │
-│  recon/ · vuln/ · exploit/ · post/ · report/                     │
-│  Each module is a Click command that writes findings to the DB   │
-├──────────────────────────────────────────────────────────────────┤
-│  Storage Layer  (SQLite per workspace)                           │
-│  targets · hosts · ports · findings · evidence                   │
-│  cve_correlations · scan_sessions · scope · api_tokens           │
-└──────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        AEGIS CLI (Click)                         │
+├──────────┬──────────┬──────────┬──────────┬─────────┬──────────┤
+│  Recon   │   Vuln   │ Exploit  │   Post   │   AI    │Forensics │
+│          │          │          │          │         │          │
+│ dns      │ web      │ web      │ shell    │ auto    │ capture  │
+│ network  │ ssl      │ lfi      │ creds    │ triage  │ analyze  │
+│ domain   │ api      │ ssrf     │ pivoting │ suggest │ dns      │
+│ cloud    │ smuggling│ oob      │          │ report  │ anomalies│
+│ osint    │ net      │ msf      │          │ chat    │ sessions │
+│ ad       │          │ net      │          │ doctor  │ creds    │
+│ secrets  │          │          │          │         │ verify   │
+│ screenshot│         │          │          │         │          │
+├──────────┴──────────┴──────────┴──────────┴─────────┴──────────┤
+│                        CORE ENGINE                               │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐   │
+│  │ AI Client│ │ Learning │ │ Workflow │ │ Exploit Chains   │   │
+│  │ (6 LLMs) │ │ Engine   │ │ Engine   │ │ (13 templates)   │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐   │
+│  │ MITRE    │ │ Adaptive │ │ Signal   │ │ CVE Correlator   │   │
+│  │ ATT&CK   │ │ Monitor  │ │ Quality  │ │ (NVD API v2)     │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│  Database (SQLite/PostgreSQL) │ Config (YAML) │ Reports (MD/HTML/PDF)│
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-**Data flow:** tool runs → output parsed → `db.add_finding()` → AI triage → report generated → SARIF exported → CI/CD notified.
 
 ---
 
 ## Installation
 
-### Option 1 — One-command installer (recommended)
+### Requirements
 
-Installs everything: apt packages, Go, Rust, subfinder, nuclei, trufflehog, gowitness, amass, feroxbuster, webtech, and Aegis itself.
+- Python 3.10 or higher
+- pip package manager
+- Linux, macOS, or Windows (WSL recommended for full tool support)
 
-```bash
-git clone https://github.com/thecnical/aegis-devin.git
-cd aegis
-sudo bash install.sh
-```
-
-Preview without making any changes:
-
-```bash
-sudo bash install.sh --dry-run
-```
-
-If Aegis is already installed, use the built-in bootstrap command:
-
-```bash
-sudo aegis bootstrap --yes
-
-# Skip Rust/feroxbuster if you don't need it
-sudo aegis bootstrap --yes --skip-rust
-
-# Preview only
-aegis bootstrap --dry-run
-```
-
-After install, open a new terminal:
-
-```bash
-aegis doctor                        # verify all tools are found
-aegis configure-keys --interactive  # set your free API keys (no YAML editing needed)
-aegis ai auto --target example.com  # run your first pentest
-```
-
----
-
-## What's New in v2.1.0
-
-### Bugs Fixed
-- **`Config not found: config/config.yaml`** — Aegis now resolves its config using `AEGIS_PROJECT_DIR` (injected by the wrapper script and `__main__.py`). Running `aegis` from any directory — `~`, `/tmp`, anywhere — correctly finds the config.
-- **`0 found, 0 missing` in `aegis doctor`** — was caused by the config not loading. Fixed by the path resolution above.
-- **Log directory creation** — `data/logs/` is now created automatically on first run; no more crash if it's missing.
-- **Config not found spam** — the warning is now printed only once per session instead of on every `get()` call.
-
-### New Commands
-| Command | What it does |
-|---|---|
-| `aegis configure-keys --interactive` | Set API keys interactively — no manual YAML editing needed |
-| `aegis configure-keys --openrouter KEY` | Set a specific key non-interactively (good for CI) |
-| `aegis self-update` | Pull latest code from git (or upgrade via pip) + update nuclei templates |
-| `aegis self-update --dry-run` | Preview what would be updated |
-| `aegis uni --yes` | **Fully** remove Aegis, all Go/Cargo/pip tools, and wrapper scripts from the system |
-| `aegis uni --dry-run` | Preview everything that would be removed |
-
-### Improved
-- `install.sh` wrapper now injects `AEGIS_PROJECT_DIR` and `PATH` (Go/Cargo bins) so all tools are found immediately after opening a new terminal
-- `aegis uninstall` now also removes `/usr/local/bin/aegis` and `/usr/local/bin/aegis-mcp` wrapper scripts
-- First-run hints only shown once (stored in config under `ux.first_run_hint_shown`)
-
----
-
-### Option 2 — Manual install (Kali Linux)
-
-**1. System dependencies**
-
-```bash
-sudo apt update
-sudo apt install -y python3-pip python3-venv git \
-  libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 \
-  libcairo2 libffi-dev libgdk-pixbuf-2.0-0
-```
-
-> The correct package name on modern Kali/Debian is `libgdk-pixbuf-2.0-0` — not `libgdk-pixbuf2.0-0`.
-
-**2. Clone and create a virtual environment**
+### Install from Source
 
 ```bash
 git clone https://github.com/thecnical/aegis-devin.git
-cd aegis
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-**3. Install Aegis**
-
-```bash
+cd aegis-devin
 pip install -e .
 ```
 
-**4. Create directories and verify**
-
-```bash
-mkdir -p data/logs
-aegis doctor
-```
-
-**5. Install external tools**
-
-```bash
-aegis install-tools --yes
-```
-
----
-
-### Option 3 — PyPI
+### Install from PyPI
 
 ```bash
 pip install aegis-devin
-pip install "aegis-devin[mcp]"   # include MCP server support
-pip install -e ".[dev]"        # development dependencies
+```
+
+### Install with Forensics Support
+
+```bash
+pip install aegis-devin[forensics]
+```
+
+### Verify Installation
+
+```bash
+aegis --help
+aegis doctor
 ```
 
 ---
 
 ## Quick Start
 
-```bash
-# 1. Add a target to scope
-aegis scope add example.com --kind domain
-
-# 2. Run recon
-aegis recon domain example.com
-
-# 3. Scan for vulnerabilities
-aegis vuln web https://example.com
-
-# 4. Generate a report
-aegis report generate example.com --format html
-
-# 5. Or do all of the above in one command
-aegis ai auto --target example.com --format html --full
-```
-
-### Set API keys without editing YAML
+### 1. Configure AI Keys (Free — No Credit Card)
 
 ```bash
-# Interactive (prompts for each key)
 aegis configure-keys --interactive
-
-# Or set individual keys directly
-aegis configure-keys --openrouter sk-or-...  --bytez btz-...
-
-# Verify AI is ready
-aegis ai doctor
 ```
 
-All providers have completely free tiers — no credit card required:
+Or set individual keys:
 
-| Service | URL | Used for |
-|---|---|---|
-| OpenRouter | https://openrouter.ai/keys | AI triage, reports, auto mode |
-| Bytez | https://bytez.com | AI triage, reports, auto mode |
-| Shodan | https://shodan.io | OSINT recon |
-| NVD | https://nvd.nist.gov/developers | CVE correlation |
+```bash
+aegis configure-keys \
+  --openrouter YOUR_OPENROUTER_KEY \
+  --bytez YOUR_BYTEZ_KEY
+```
+
+**Free API Key Sources:**
+
+| Provider | URL | Speed | Registration |
+|----------|-----|-------|--------------|
+| Groq | https://console.groq.com | 750 tok/s | Email signup |
+| NVIDIA NIM | https://build.nvidia.com | 100+ models | Email signup |
+| LLM7 | https://llm7.io | Good | **No registration needed** |
+| OpenRouter | https://openrouter.ai/keys | Many models | Email signup |
+| Bytez | https://bytez.com | Good | Email signup |
+
+> LLM7 works without any API key. Aegis automatically falls back through providers.
+
+### 2. Validate Setup
+
+```bash
+aegis ai doctor --strict
+```
+
+### 3. Add Target and Scan
+
+```bash
+aegis scope add example.com
+aegis ai auto --target example.com
+```
 
 ---
 
-## Complete Usage Guide
+## AI Integration
 
-### Hydra Brute-Force (real credential testing)
+### How AI Works in Aegis
 
-```bash
-# Test SSH with default credentials (requires --force to bypass safe_mode)
-aegis vuln net 192.168.1.1 --service ssh --force
+Aegis uses Large Language Models (LLMs) via free API providers for intelligent decision-making. The AI does NOT do the scanning — external tools (nmap, nuclei, sqlmap) do the actual work. The AI helps with:
 
-# Test all services at once
-aegis vuln net 192.168.1.1 --service all --force
+| Function | What AI Does | Example |
+|----------|-------------|---------|
+| **Tool Selection** | Analyzes discovered services, recommends which tools to run | "I see Apache 2.4.49 — run nuclei with CVE-2021-41773 template" |
+| **Next-Action Planning** | Based on findings so far, suggests what to try next | "SQL injection found — try to extract credentials" |
+| **Payload Generation** | Writes targeted attack payloads for discovered endpoints | Generates XSS/SQLi/SSRF payloads tailored to the target |
+| **Finding Triage** | Prioritizes vulnerabilities, explains risk in plain English | "This SQLi is critical because it leads to full DB access" |
+| **Executive Summary** | Writes professional pentest report narrative | Full paragraph-style executive summary |
+| **Interactive Chat** | Answers questions about scan results | "Which findings should I fix first?" |
 
-# Use custom wordlists
-aegis vuln net 192.168.1.1 --service ssh \
-  --userlist /usr/share/wordlists/users.txt \
-  --passlist /usr/share/wordlists/rockyou.txt --force
+### Provider Fallback Chain
 
-# WAF detection only (no brute-force)
-aegis vuln net 192.168.1.1 --no-brute --url http://192.168.1.1
+```
+Request → Groq (fastest) → NVIDIA NIM → LLM7 (no key) → Cloudflare → Bytez → OpenRouter
+           ↓ if fails        ↓ if fails     ↓ if fails      ↓ if fails    ↓ if fails
+         (next provider)   (next provider) (next provider) (next provider) (error)
 ```
 
-### HTTP Evidence Capture (every finding has proof)
+### Task-Specific Model Selection
+
+Different tasks use different models optimized for that purpose:
+
+- **Triage/Suggest:** Llama 3.3 70B (needs reasoning)
+- **Summarize:** Llama 3.1 8B (fast, simple task)
+- **Report:** Llama 3.3 70B (needs quality writing)
+- **Chat:** Llama 3.3 70B (conversational)
+- **Forensics:** Nemotron 70B (analytical reasoning)
+
+### Using AI Without External Tools
+
+Even without nmap/nuclei installed, the AI commands still work:
 
 ```bash
-# Web scan — captures full HTTP request/response for every finding
-aegis vuln web https://example.com
-
-# Authenticated scan — pass session cookies
-aegis vuln web https://example.com --cookies "session=abc123; csrf=xyz"
-
-# With custom auth header (Bearer token, API key, etc.)
-aegis vuln web https://example.com --header "Authorization: Bearer eyJ..."
-
-# Target specific vulnerability types
-aegis vuln web https://example.com --tags "cve,sqli,xss"
-```
-
-### WAF Detection
-
-```bash
-# Detect WAF before running any exploits
-aegis vuln net 192.168.1.1 --no-brute --no-smb --url https://example.com
-
-# WAF detection runs automatically in ai auto mode
-aegis ai auto --target example.com
-
-# If WAF detected, use stealth profile to reduce noise
-aegis --profile stealth vuln web https://example.com
-```
-
-### PostgreSQL (team/concurrent use)
-
-```bash
-# Install driver
-pip install psycopg2-binary
-
-# Create database
-createdb aegis
-psql aegis -c "CREATE USER aegis WITH PASSWORD 'yourpassword';"
-psql aegis -c "GRANT ALL ON DATABASE aegis TO aegis;"
-
-# Update config/config.yaml:
-# db_path: "postgresql://aegis:yourpassword@localhost:5432/aegis"
-```
-
-### Authenticated Scanning (post-login)
-
-```bash
-# Log in manually, grab your session cookie, then scan
-aegis vuln web https://app.example.com/dashboard \
-  --cookies "sessionid=abc123def456" \
-  --header "X-CSRF-Token: token123"
-
-# API scan with Bearer token
-aegis vuln web https://api.example.com \
-  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..." \
-  --tags "api,auth"
-```
-
-### Full Autonomous Pentest (end-to-end)
-
-```bash
-# 1. Set up workspace and scope
-aegis workspace create client-acme
-aegis workspace switch client-acme
-aegis scope add acme.com --kind domain
-aegis scope add 10.10.0.0/24 --kind cidr
-
-# 2. Run full autonomous pentest
-aegis ai auto --target acme.com --full --format html
-
-# 3. Triage and correlate
+# These only need AI keys, no external tools
+aegis ai suggest --target example.com
+aegis ai chat
 aegis ai triage --session 1
-aegis cve correlate --session 1
+aegis ai summarize --session 1
+```
 
-# 4. Export for CI/CD
+---
+
+## Command Reference
+
+### Global Options
+
+Every command accepts these flags:
+
+```bash
+aegis --config PATH      # Config file path (default: config/config.yaml)
+aegis --profile NAME     # Scan profile (default, fast, deep, stealth, web-fast, web-deep, api-deep)
+aegis --workspace NAME   # Override active workspace
+aegis --json             # Output all results as JSON
+aegis --json-output FILE # Write JSON to file
+aegis --debug            # Enable verbose debug logging
+```
+
+---
+
+### Scope Management
+
+Manage which targets are authorized for scanning.
+
+```bash
+# Add targets
+aegis scope add example.com
+aegis scope add 192.168.1.0/24
+aegis scope add https://app.example.com
+
+# List current scope
+aegis scope list
+
+# Remove target
+aegis scope remove 1   # by ID from list
+```
+
+> When `safe_mode: true` in config, all scan commands validate targets against scope before executing.
+
+---
+
+### Reconnaissance
+
+#### DNS Enumeration
+
+```bash
+aegis recon dns example.com
+```
+
+Resolves A, MX, TXT, NS, CNAME records using dnspython. No external tools needed.
+
+**Output:** Table with record types and values.
+
+#### Network Scan
+
+```bash
+aegis recon network 192.168.1.0/24
+aegis recon network 10.0.0.1 --profile deep
+```
+
+Runs nmap ping sweep + port scan. Parses XML output into structured findings.
+
+**Requires:** nmap
+
+**Output:** Hosts, open ports, services, OS detection.
+
+#### Domain Recon
+
+```bash
+aegis recon domain example.com
+```
+
+Combines subdomain enumeration (subfinder), technology detection (webtech), and Shodan lookup.
+
+**Requires:** subfinder, webtech (optional: shodan CLI)
+
+#### Cloud Asset Discovery
+
+```bash
+aegis recon cloud example.com
+```
+
+Discovers exposed S3 buckets, Azure Blob containers, and GCP Storage via DNS + HTTP probing. No API keys required.
+
+**Output:** Found buckets with access level (public listing, access denied, not found).
+
+#### OSINT Passive Reconnaissance
+
+```bash
+aegis recon osint example.com
+aegis recon osint example.com --no-wayback
+aegis recon osint example.com --js-url https://example.com/app.js
+```
+
+**100% passive — makes NO requests to the target.** Queries third-party databases:
+
+| Source | What It Finds |
+|--------|--------------|
+| **Certificate Transparency** (crt.sh) | All subdomains from SSL certificates |
+| **Wayback Machine** (web.archive.org) | Historical URLs categorized: APIs, admin panels, config files, backups |
+| **Favicon Hash** | MurmurHash3 for Shodan infrastructure discovery |
+| **Passive DNS** (HackerTarget) | Associated hosts and IPs |
+| **JavaScript Analysis** | API endpoints, hardcoded secrets, emails, IPs, cloud URLs |
+
+**Options:**
+- `--no-wayback` — Skip Wayback Machine query
+- `--no-crt` — Skip Certificate Transparency
+- `--no-favicon` — Skip favicon hash
+- `--no-dns` — Skip passive DNS
+- `--js-url URL` — Analyze a JavaScript file for endpoints/secrets
+- `--timeout INT` — Request timeout (default: 30s)
+
+#### Active Directory Enumeration
+
+```bash
+aegis recon ad 10.0.0.1 --domain corp.local --username admin --password Pass123
+aegis recon ad 10.0.0.1 --domain corp.local  # anonymous enumeration
+```
+
+Runs BloodHound, ldapdomaindump, and CrackMapExec for AD enumeration.
+
+**Requires:** bloodhound-python, ldapdomaindump, crackmapexec (all optional — skips if not found)
+
+#### Secret Scanning
+
+```bash
+aegis recon secrets /path/to/repo
+aegis recon secrets https://github.com/org/repo
+```
+
+**Requires:** trufflehog
+
+#### Screenshot
+
+```bash
+aegis recon screenshot https://example.com
+```
+
+**Requires:** gowitness
+
+---
+
+### Vulnerability Scanning
+
+#### Web Vulnerability Scan
+
+```bash
+aegis vuln web https://target.com
+aegis vuln web https://target.com --profile web-deep
+```
+
+Runs nuclei templates + feroxbuster directory bruting. Captures HTTP evidence for each finding.
+
+**Requires:** nuclei, feroxbuster
+
+**Output:** Findings table with severity, template ID, evidence.
+
+#### SSL/TLS Analysis
+
+```bash
+aegis vuln ssl example.com
+```
+
+**Requires:** testssl.sh
+
+#### API Fuzzing
+
+```bash
+aegis vuln api https://target.com/api
+```
+
+**Requires:** ffuf
+
+#### HTTP Smuggling
+
+```bash
+aegis vuln smuggling https://target.com
+```
+
+Tests CL.TE, TE.CL, and TE.TE request smuggling.
+
+---
+
+### Exploitation
+
+#### Web Exploitation
+
+```bash
+aegis exploit web https://target.com/search?q=test
+```
+
+Runs sqlmap (SQL injection) + reflected XSS testing.
+
+**Requires:** sqlmap
+
+#### Local File Inclusion
+
+```bash
+aegis exploit lfi https://target.com/page?file=about
+```
+
+Tests 9 LFI payloads (../../etc/passwd, php://filter, etc.).
+
+#### SSRF Testing
+
+```bash
+aegis exploit ssrf https://target.com/fetch?url=
+```
+
+Tests common SSRF parameters with internal IP targets.
+
+#### Out-of-Band Detection
+
+```bash
+aegis exploit oob https://target.com
+```
+
+SSRF/XXE detection via DNS callback (interactsh).
+
+---
+
+### AI Commands
+
+#### Full Autonomous Pentest
+
+```bash
+aegis ai auto --target example.com
+aegis ai auto --target example.com --full          # All phases including exploit
+aegis ai auto --target example.com --dry-run       # Show plan without executing
+aegis ai auto --target example.com --min-severity high  # Only report high+
+```
+
+**What happens:**
+1. Runs nmap → discovers hosts, ports, services
+2. AI analyzes services → selects best tools
+3. Runs recommended tools → parses structured output
+4. AI reviews findings → suggests next actions
+5. AI generates payloads → tests them against real endpoints
+6. Generates report with AI executive summary
+
+**Duration:** 2-10 minutes depending on target size and tools installed.
+
+#### AI Triage
+
+```bash
+aegis ai triage --session 1
+aegis ai triage --target example.com
+```
+
+AI prioritizes findings with remediation advice, risk narrative, and CVSS suggestions.
+
+#### AI Summary
+
+```bash
+aegis ai summarize --session 1
+```
+
+Generates executive summary of a scan session.
+
+#### AI Suggestions
+
+```bash
+aegis ai suggest --target example.com
+```
+
+AI analyzes the target and suggests attack surface areas and testing approaches.
+
+#### AI Report
+
+```bash
+aegis ai report --target example.com
+```
+
+AI writes a full pentest report narrative from findings.
+
+#### AI Chat
+
+```bash
+aegis ai chat
+```
+
+Interactive conversation about your findings. Ask questions like:
+- "Which vulnerabilities should I fix first?"
+- "How can the attacker chain these findings?"
+- "Write a remediation plan for the critical findings"
+
+#### AI Doctor
+
+```bash
+aegis ai doctor
+aegis ai doctor --strict   # Exit non-zero if AI not ready
+```
+
+Validates AI configuration, tests provider connectivity, shows which models are available.
+
+---
+
+### MITRE ATT&CK
+
+#### Map Findings to ATT&CK
+
+```bash
+aegis mitre map
+aegis mitre map --session 3
+aegis mitre map --severity high
+aegis mitre map --json
+```
+
+Maps all findings to MITRE ATT&CK Enterprise techniques. Shows:
+- Finding → technique(s) mapping with confidence scores
+- Kill chain coverage visualization (which tactics are covered)
+- Coverage gaps (tactics with no observations)
+
+**Output example:**
+```
+Kill Chain Coverage:
+  ██████████ Reconnaissance        (4 techniques)
+  ░░░░░░░░░░ Resource Development  (0 techniques)  ← GAP
+  ████████░░ Initial Access        (3 techniques)
+  ████░░░░░░ Execution             (1 technique)
+  ...
+```
+
+#### Generate Attack Narrative
+
+```bash
+aegis mitre narrative
+aegis mitre narrative --session 2
+```
+
+Generates a structured attack story organized by kill chain phase.
+
+#### Browse Techniques
+
+```bash
+aegis mitre techniques
+aegis mitre techniques --tactic "Credential Access"
+aegis mitre techniques --search "brute"
+```
+
+Lists known ATT&CK techniques. 82 techniques across 14 tactics in the database.
+
+---
+
+### Exploit Chain Analysis
+
+#### Discover Chains
+
+```bash
+aegis chains analyze
+aegis chains analyze --session 3
+aegis chains analyze --min-confidence 0.6
+aegis chains analyze --json
+```
+
+Automatically connects individual vulnerabilities into multi-step attack paths. The engine:
+1. Classifies findings by vulnerability type (17 types: sqli, xss, rce, lfi, ssrf, etc.)
+2. Matches against 13 chain templates (known attack patterns)
+3. Discovers implicit chains via capability graph traversal
+4. Scores confidence and provides mitigations
+
+**Example output:**
+```
+━━━ Chain 1: SSRF to Cloud Compromise ━━━
+  Impact: CRITICAL | Confidence: 90%
+  Description: SSRF allows reading cloud metadata → IAM credentials → full compromise
+  Steps:
+    1. [HIGH] SSRF on image proxy
+       → Gains: internal_access, cloud_metadata, port_scanning
+  Final Impact: Full cloud account compromise via metadata service
+  Mitigations:
+    • Block metadata IP in egress rules
+    • Use IMDSv2 (requires token)
+    • WAF SSRF rules
+```
+
+#### Generate Chain Report
+
+```bash
+aegis chains report
+aegis chains report --session 2
+```
+
+Generates detailed Markdown report of all discovered exploit chains.
+
+---
+
+### Network Forensics
+
+#### Deep PCAP Analysis
+
+```bash
+aegis forensics analyze capture.pcap
+aegis forensics analyze capture.pcap --timeline-output timeline.json
+aegis forensics analyze capture.pcap --json
+```
+
+Comprehensive analysis including:
+- C2 beacon detection (scoring based on interval regularity, jitter, payload consistency)
+- DNS tunneling detection (entropy analysis, subdomain length, query frequency)
+- DGA domain detection (high entropy + unusual length)
+- Fast-flux network detection (single domain → many IPs)
+- Data exfiltration heuristics (volume, unusual ports, DNS payload sizes)
+- Session reconstruction (TCP streams, HTTP conversations)
+- Timeline building for incident response
+
+#### DNS Analysis
+
+```bash
+aegis forensics dns capture.pcap
+aegis forensics dns capture.pcap --json
+```
+
+DNS-focused deep analysis:
+- **Tunneling:** Detects encoded data in subdomain labels
+- **DGA:** Identifies algorithmically generated domains
+- **Fast-flux:** Finds domains resolving to many IPs
+- **Statistics:** Top queried domains, query patterns
+
+#### Anomaly Detection
+
+```bash
+aegis forensics anomalies capture.pcap
+aegis forensics anomalies capture.pcap --z-threshold 2.5
+aegis forensics anomalies capture.pcap --port-scan-threshold 15
+aegis forensics anomalies capture.pcap --severity high
+```
+
+Statistical anomaly detection using Welford's online algorithm (O(1) memory):
+
+| Detection | Method |
+|-----------|--------|
+| Volume spike | Z-score on payload sizes per source |
+| Rate spike | Z-score on packets-per-second per source |
+| Port scan | Track unique dst_ports per (src, dst) pair in time window |
+| Horizontal scan | Track unique dst_hosts per (src, port) pair |
+| High-entropy payload | Shannon entropy > 7.5 (encrypted C2) |
+| ICMP flood | Rate > 100 pps from single source |
+| ICMP tunnel | ICMP payload > 128 bytes (normal ping is 32-64) |
+| ARP spoofing | MAC address change for known IP |
+| TTL anomaly | Significant TTL deviation (possible MITM) |
+| Slowloris | Many long-lived HTTP connections from one source |
+
+**Options:**
+- `--z-threshold FLOAT` — Z-score threshold (default: 3.0, lower = more sensitive)
+- `--port-scan-threshold INT` — Ports to trigger alert (default: 20)
+- `--severity CHOICE` — Filter results by severity
+
+#### Session Extraction
+
+```bash
+aegis forensics sessions capture.pcap --protocol http
+aegis forensics sessions capture.pcap --protocol dns
+aegis forensics sessions capture.pcap --protocol tls
+aegis forensics sessions capture.pcap --protocol all
+```
+
+Extracts and displays protocol sessions (HTTP request/response, DNS queries, TLS handshakes).
+
+#### Credential Extraction
+
+```bash
+aegis forensics credentials capture.pcap
+```
+
+Extracts cleartext credentials from FTP, HTTP Basic Auth, and Telnet traffic.
+
+#### Live Capture
+
+```bash
+sudo aegis forensics capture --interface eth0 --duration 300
+sudo aegis forensics capture -i wlan0 -d 60 --filter "port 80 or port 443"
+```
+
+Starts live packet capture with:
+- Automatic file rotation
+- SHA-256 + BLAKE3 evidence chain (court-admissible integrity)
+- Configurable BPF filters
+
+**Options:**
+- `--interface / -i` — Network interface (default: eth0)
+- `--duration / -d` — Capture duration in seconds (default: 60)
+- `--filter TEXT` — BPF filter expression
+- `--output-dir PATH` — Output directory
+- `--rotation INT` — File rotation interval in seconds
+
+**Requires:** tcpdump (capture), dpkt or tshark (analysis)
+
+#### Evidence Verification
+
+```bash
+aegis forensics verify data/forensics/captures/evidence_chain.json
+```
+
+Verifies the integrity of an evidence hash chain. Detects if any PCAP file was tampered with after capture.
+
+---
+
+### Self-Learning Engine
+
+The learning engine makes Aegis smarter with every scan. It maintains a persistent knowledge base in SQLite.
+
+#### View Status
+
+```bash
+aegis learn status
+```
+
+Shows knowledge base size: target profiles, tool effectiveness records, scan history, drift events, patterns, strategies.
+
+#### Target Profile
+
+```bash
+aegis learn profile example.com
+```
+
+Shows everything Aegis has learned about a target:
+- Technologies detected (nginx, php, wordpress, etc.)
+- Open ports and services
+- Server software and version
+- Historical vulnerabilities (all vulns ever found)
+- Patch history (vulns that were fixed between scans)
+- Scan count and frequency
+
+#### Intelligent Recommendations
+
+```bash
+aegis learn recommend example.com
+```
+
+Uses accumulated knowledge to suggest the optimal scan strategy:
+- **Recommended tools:** Based on what worked for this technology stack
+- **Skip tools:** Tools with low effectiveness score
+- **Focus areas:** Vulns found on similar targets that this target might have
+- **Drift alerts:** Unacknowledged changes since last scan
+- **Confidence:** low/medium/high based on data quantity
+
+#### Drift Detection
+
+```bash
+aegis learn drift                        # All unacknowledged drifts
+aegis learn drift example.com            # Specific target
+aegis learn drift example.com --all      # Full history
+```
+
+Shows changes detected between scans:
+- New ports opened / ports closed
+- Technologies added / removed
+- Server software version changes
+- New vulnerabilities discovered
+- Previously found vulnerabilities now patched
+
+#### List Known Targets
+
+```bash
+aegis learn targets
+```
+
+Lists all targets in the knowledge base with scan count, technologies, and last seen date.
+
+---
+
+### Adaptive Monitoring
+
+#### Start Monitoring
+
+```bash
+aegis watch
+aegis watch --interval 1800                    # 30-minute base interval
+aegis watch --min-interval 120 --max-interval 43200  # 2min to 12hrs range
+aegis watch --notify slack                     # With Slack notifications
+aegis watch --notify discord                   # With Discord notifications
+aegis watch --max-iterations 10                # Stop after 10 cycles
+```
+
+**How adaptive scheduling works:**
+- Target has changes? → Scan interval decreases (more frequent)
+- Target is stable? → Exponential backoff (less frequent)
+- Minimum interval prevents overwhelming the target
+- Maximum interval ensures nothing is missed
+
+**Example behavior:**
+```
+Initial: scan every 60 minutes
+Scan 1: 3 changes detected → interval drops to 36 minutes
+Scan 2: 2 more changes → drops to 21 minutes
+Scan 3: no changes → increases to 30 minutes
+Scan 4: no changes → increases to 45 minutes
+Scan 5: no changes → increases to 72 minutes
+...eventually backs off to max (24 hours if no changes)
+```
+
+**Delta Reports:** After each scan, generates a report showing:
+- New findings (vulnerabilities discovered since last scan)
+- Resolved findings (previously found vulns no longer detected)
+- Service changes (new/removed ports)
+- Drift events (technology/config changes)
+- Severity trend (improving/stable/worsening)
+
+---
+
+### Reporting
+
+#### Generate Reports
+
+```bash
+aegis report generate --target example.com --format md
+aegis report generate --target example.com --format html
+aegis report generate --target example.com --format pdf
+aegis report generate --target example.com --format html --min-severity medium
+```
+
+Reports include:
+- Executive summary
+- Findings table with severity and evidence
+- Attack graph (D3.js interactive visualization in HTML)
+- Remediation recommendations
+- Custom sections (configurable in config.yaml)
+
+#### SARIF Export (GitHub Code Scanning)
+
+```bash
+aegis sarif export --session 1
 aegis sarif export --session 1 --output results.sarif
 ```
 
-### Resumable Authorized Web Workflow (Phase 2-7)
+Exports findings in SARIF format for GitHub Code Scanning integration.
+
+#### Timeline
 
 ```bash
-# Safe default orchestration: discovery -> fingerprint -> mapping -> checks -> validation -> report prep
-aegis web-assess --target https://example.com
-
-# Resume an interrupted run
-aegis web-assess --target https://example.com --resume-run-id <run-id>
-
-# CI mode (deterministic ordering + strict exit semantics)
-aegis web-assess --target https://example.com --ci --require-cross-validation
-
-# Explicitly enable dangerous probes (opt-in only)
-aegis web-assess --target https://example.com --dangerous-checks
+aegis timeline
+aegis timeline --limit 20
 ```
 
-Enterprise controls:
+Shows scan session history with timestamps.
+
+#### Compare Sessions
 
 ```bash
-# Create hashed API token (shown once)
-aegis token create --description "ci-runner"
-
-# View audit events
-aegis audit list --limit 50
+aegis compare 1 2
 ```
 
-### Credential Collection (post-exploitation)
-
-```bash
-# List SMB shares
-aegis post creds --target 192.168.1.10
-
-# Deep scan — download and scan files for passwords/tokens
-aegis post creds --target 192.168.1.10 --deep
-```
-
-### Pivoting (internal network)
-
-```bash
-# SOCKS5 proxy through a compromised host
-aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10
-
-# Scan internal network through the proxy
-aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10 --scan
-
-# Port forward: access internal RDP through local port 3390
-aegis post pivoting 10.0.0.0/24 --ssh user@192.168.1.10 \
-  --forward 3390:10.0.0.5:3389
-```
-
-### Metasploit Integration
-
-```bash
-# Auto-match all findings for a target to MSF modules
-aegis exploit msf 192.168.1.1 --force
-
-# Run a specific MSF module (check only — no exploitation)
-aegis exploit msf 192.168.1.1 --module exploit/windows/smb/ms17_010_eternalblue \
-  --check --force
-
-# Run from a specific finding ID
-aegis exploit msf 192.168.1.1 --finding-id 42 --lhost 10.10.10.1 --force
-
-# Use Metasploit RPC API (requires: msfrpcd -P yourpassword -S -f)
-aegis exploit msf 192.168.1.1 --rpc-host 127.0.0.1 --rpc-pass yourpassword --force
-```
-
-### HTTP Request Smuggling
-
-```bash
-# Test for CL.TE, TE.CL, TE.TE desync vulnerabilities
-aegis vuln smuggling https://example.com
-
-# Test a specific path
-aegis vuln smuggling https://example.com --path /api/v1/users
-
-# Adjust timeout (longer = more sensitive timing detection)
-aegis vuln smuggling https://example.com --timeout 20
-```
-
-### Cloud Asset Discovery
-
-```bash
-# Discover exposed S3, Azure Blob, GCP Storage buckets
-aegis recon cloud example.com
-
-# Skip specific providers
-aegis recon cloud example.com --no-azure --no-gcp
-
-# Use custom bucket name wordlist
-aegis recon cloud example.com --wordlist /path/to/buckets.txt
-```
-
-### Active Directory Enumeration
-
-```bash
-# Anonymous enumeration (no credentials needed)
-aegis recon ad 192.168.1.10 --domain corp.local
-
-# Full enumeration with credentials
-aegis recon ad 192.168.1.10 --domain corp.local \
-  --username administrator --password Password123
-
-# After BloodHound collection, import into BloodHound GUI:
-# bloodhound → Upload Data → select zip from data/ad/bloodhound/
-# Run query: "Find Shortest Paths to Domain Admins"
-```
-
-### OOB SSRF/XXE Detection
-
-```bash
-# Auto-detect using interactsh
-# Install: go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest
-aegis exploit oob https://example.com --force
-
-# Use custom callback domain (Burp Collaborator, etc.)
-aegis exploit oob https://example.com --callback your.burpcollaborator.net --force
-
-# Test XXE as well (sends XML payloads to the endpoint)
-aegis exploit oob https://example.com --test-xxe --force
-
-# Wait longer for async callbacks
-aegis exploit oob https://example.com --wait 30 --force
-```
+Compares findings between two scan sessions. Shows new, resolved, and persisting vulnerabilities.
 
 ---
 
-## Configuration
+### CVE Correlation
 
-All settings live in `config/config.yaml`. Aegis never reads environment variables for secrets.
+```bash
+aegis cve correlate --session 1
+aegis cve lookup CVE-2024-1234
+```
+
+Correlates findings with the NVD (National Vulnerability Database) API v2. Fetches CVSS scores, descriptions, and references.
+
+**Requires:** NVD API key (free: https://nvd.nist.gov/developers/request-an-api-key)
+
+---
+
+### Campaign Management
+
+```bash
+aegis campaign create "Bug Bounty Q1" --domain target.com --url https://app.target.com
+aegis campaign list
+aegis campaign run "Bug Bounty Q1"
+aegis campaign report "Bug Bounty Q1"
+```
+
+Manages multi-target scan campaigns with parallel execution, progress tracking, and aggregated reporting.
+
+---
+
+### REST API
+
+#### Start Server
+
+```bash
+aegis api start
+aegis api start --port 9000 --host 0.0.0.0
+```
+
+#### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/health` | Health check |
+| GET | `/api/v1/findings` | List findings (paginated) |
+| GET | `/api/v1/findings/{id}` | Get finding details + notes + CVEs |
+| POST | `/api/v1/findings/{id}/notes` | Add note to finding |
+| GET | `/api/v1/sessions` | List scan sessions |
+| GET | `/api/v1/sessions/{id}/findings` | Session findings |
+| POST | `/api/v1/scan` | Trigger async scan job |
+| GET | `/api/v1/scan/{job_id}` | Get scan job status |
+| GET | `/api/v1/report/{target}` | Download report |
+| POST | `/api/v1/burp/import` | Import Burp XML |
+| GET | `/api/v1/sarif/{session_id}` | SARIF export |
+| GET | `/api/v1/scope` | List scope |
+| POST | `/api/v1/scope` | Add scope entry |
+| DELETE | `/api/v1/scope/{id}` | Remove scope entry |
+
+#### Authentication
+
+Set `api.key` in config.yaml or use token-based auth:
+
+```bash
+aegis token create --name "CI Pipeline"
+# Returns: aegis_tok_xxxxxxxxxxxx
+
+# Use in requests:
+curl -H "X-API-Key: aegis_tok_xxxxxxxxxxxx" http://localhost:8000/api/v1/findings
+```
+
+#### Security
+
+- Rate limiting: 100 requests/minute/IP
+- CORS: Configurable via `AEGIS_CORS_ORIGINS` environment variable
+- Input validation on all target parameters
+
+---
+
+### Workspace Management
+
+```bash
+aegis workspace create pentest-client-a
+aegis workspace switch pentest-client-a
+aegis workspace list
+aegis workspace delete old-workspace
+```
+
+Each workspace has its own database, findings, and scan history.
+
+---
+
+### Configuration
+
+#### Interactive Key Setup
+
+```bash
+aegis configure-keys --interactive
+```
+
+#### Config File
+
+Located at `config/config.yaml`. Key sections:
 
 ```yaml
 general:
-  db_path: data/aegis.db
-  safe_mode: true               # abort if target is out of scope
-  wordlists_path: data/wordlists
+  safe_mode: true          # Require scope for all scans
+  default_timeout: 30      # Command timeout in seconds
 
 api_keys:
-  shodan: CHANGE_ME             # https://shodan.io (free tier available)
-  openrouter: CHANGE_ME         # https://openrouter.ai (free tier available)
-  bytez: CHANGE_ME              # https://bytez.com (free tier available)
-  nvd: CHANGE_ME                # https://nvd.nist.gov/developers/request-an-api-key (free)
+  groq: YOUR_KEY           # Fastest AI provider
+  nvidia: YOUR_KEY         # 100+ models
+  openrouter: YOUR_KEY     # Many model options
+  bytez: YOUR_KEY          # Free fallback
+  shodan: YOUR_KEY         # Shodan integration
+  nvd: YOUR_KEY            # CVE correlation
 
 notifications:
-  slack_webhook: ""
-  discord_webhook: ""
+  slack_webhook: URL       # Slack alerts
+  discord_webhook: URL     # Discord alerts
 
-profiles:
-  default:
-    timeout: 30
-    nmap_args: "-sC -sV"
-    nuclei_rate: 150
-  web-fast:
-    timeout: 12
-    nmap_args: "-sS -Pn"
-    nuclei_rate: 350
-  web-deep:
-    timeout: 90
-    nmap_args: "-sC -sV -A -O --script=vuln"
-    nuclei_rate: 80
-  api-deep:
-    timeout: 75
-    nmap_args: "-sV -Pn"
-    nuclei_rate: 120
-  stealth:
-    timeout: 120
-    nmap_args: "-sS -T2 --randomize-hosts"
-    nuclei_rate: 20
-  deep:
-    timeout: 90
-    nmap_args: "-sC -sV -A -O --script=vuln"
-    nuclei_rate: 50
-```
-
-Switch profiles with `--profile web-deep` (new) or legacy profiles like `stealth`.
-For first-time guided config, run `aegis setup --wizard`.
-All API keys have free tiers — no paid subscriptions required.
-
-**Global CLI flags:**
-
-| Flag | Default | Description |
-|---|---|---|
-| `--config PATH` | `config/config.yaml` | Config file path |
-| `--profile NAME` | `default` | Scan profile |
-| `--workspace NAME` | active workspace | Override active workspace |
-| `--json` | off | Output as JSON |
-| `--json-output FILE` | — | Write JSON to file |
-| `--debug` | off | Enable debug logging |
-
----
-
-## Workspaces
-
-Each engagement gets its own isolated SQLite database. No shared state between workspaces.
-
-```bash
-aegis workspace create client-acme     # create a new workspace
-aegis workspace switch client-acme     # switch to it
-aegis workspace list                   # list all workspaces
-aegis workspace delete old-engagement  # remove a workspace
-
-# Override for a single command without switching
-aegis --workspace client-acme recon domain acme.com
+workflow:
+  workers: 4               # Parallel threads
+  rate_limit_per_sec: 5    # HTTP rate limiting
 ```
 
 ---
 
-## Scope Management
+## Scan Profiles
 
-Before any tool runs, `ScopeManager` checks whether the target is in scope. With `safe_mode: true`, out-of-scope scans abort before any network request is made.
+| Profile | Use Case | Speed |
+|---------|----------|-------|
+| `default` | Balanced scan | Medium |
+| `fast` | Quick results | Fast |
+| `deep` | Thorough with OS detection | Slow |
+| `stealth` | Low detection risk | Very slow |
+| `web-fast` | Quick web scan | Fast |
+| `web-deep` | Thorough web assessment | Slow |
+| `api-deep` | API-focused testing | Medium |
 
 ```bash
-aegis scope add acme.com --kind domain
-aegis scope add 10.10.0.0/16 --kind cidr
-aegis scope add https://api.acme.com --kind url
-aegis scope add 192.168.1.5 --kind ip
-
-aegis scope list
-aegis scope remove 3
+aegis vuln web https://target.com --profile web-deep
+aegis ai auto --target example.com --profile stealth
 ```
 
 ---
 
-## Recon
+## External Tools
 
-```bash
-# Subdomain enumeration, DNS, Nmap on discovered hosts
-aegis recon domain example.com
+Aegis wraps these open-source tools (install what you need):
 
-# CIDR range scan — hosts, ports, services
-aegis recon network 192.168.1.0/24 --port-scan
+| Tool | Purpose | Install |
+|------|---------|---------|
+| nmap | Port scanning, service detection | `apt install nmap` |
+| nuclei | Vulnerability scanning (10K+ templates) | `go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest` |
+| feroxbuster | Directory bruting | `apt install feroxbuster` |
+| sqlmap | SQL injection | `apt install sqlmap` |
+| subfinder | Subdomain enumeration | `go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest` |
+| hydra | Brute force | `apt install hydra` |
+| testssl.sh | SSL/TLS analysis | `apt install testssl.sh` |
+| trufflehog | Secret scanning | `go install github.com/trufflesecurity/trufflehog/v3@latest` |
+| gowitness | Screenshots | `go install github.com/sensepost/gowitness@latest` |
+| crackmapexec | AD/SMB enumeration | `apt install crackmapexec` |
+| bloodhound-python | AD attack paths | `pip install bloodhound` |
+| tcpdump | Packet capture | `apt install tcpdump` |
+| tshark | PCAP analysis | `apt install tshark` |
 
-# DNS record queries
-aegis recon dns example.com --types A,MX,TXT,NS,AAAA
-
-# OSINT — emails, GitHub dorks, Shodan
-aegis recon osint example.com --emails --github-dorks
-
-# Secret scanning (trufflehog)
-aegis recon secrets /path/to/project
-aegis recon secrets https://github.com/target/repo --mode git
-
-# Screenshot all web services (gowitness)
-aegis recon screenshot example.com
-aegis recon screenshot . --from-db
-```
+> Aegis gracefully skips any tool that's not installed — it never crashes, just reports "tool not found".
 
 ---
 
-## Vulnerability Scanning
-
-```bash
-# Web vuln scan via Nuclei templates
-aegis vuln web https://example.com
-
-# Network vuln scan via Nmap NSE scripts
-aegis vuln net 192.168.1.1
-
-# SSL/TLS analysis via testssl.sh
-aegis vuln ssl example.com --port 443
-
-# API fuzzing via ffuf
-aegis vuln api https://api.example.com --wordlist data/wordlists/api.txt
-```
-
----
-
-## Technology Detection
-
-Aegis uses free, open-source tools — no paid API key required.
-
-| Tool | Install | Notes |
-|---|---|---|
-| **webtech** | `pip install webtech` | Fingerprints via headers, HTML, cookies |
-| **whatweb** | `sudo apt install whatweb` | Pre-installed on Kali Linux |
-
-Aegis tries `webtech` first, falls back to `whatweb` automatically.
-
-```bash
-aegis recon domain example.com              # tech detection runs automatically
-aegis recon domain example.com --no-techdetect  # skip if not needed
-```
-
----
-
-## AI Features
-
-### Autonomous Mode
-
-```bash
-# Full pentest — recon, vuln, AI triage, report
-aegis ai auto --target example.com
-
-# All 5 phases + HTML report
-aegis ai auto --target example.com --full --format html
-
-# Dry run — see what would run without executing
-aegis ai auto --target example.com --dry-run
-```
-
-### AI Triage and Analysis
-
-```bash
-aegis ai triage --session 1        # triage findings from a session
-aegis ai summarize --session 1     # executive summary
-aegis ai suggest --target acme.com # attack surface suggestions
-aegis ai report --target acme.com  # generate narrative report section
-aegis ai chat                      # interactive AI chat about findings
-aegis ai doctor                    # validate key/provider/fallback readiness
-aegis ai doctor --strict           # fail CI/scripting if AI is not ready
-```
-
-### AI Payload Generation
-
-During `aegis ai auto`, after recon completes, the AI automatically generates targeted payloads (SQLi, XSS, SSRF, LFI, RCE) based on the detected tech stack. Payloads are stored as `medium` severity findings with category `ai-payload`. Uses your free OpenRouter or Bytez key.
-
-### Setup Wizard
-
-```bash
-# Guided first-run flow: base config + profile selection + optional AI onboarding
-aegis setup --wizard
-```
-
----
-
-## MCP Server — AI Agent Integration
-
-Aegis can run as an [MCP](https://modelcontextprotocol.io) server, letting AI agents like Claude or Cursor drive full pentests autonomously.
-
-```bash
-pip install mcp
-aegis-mcp
-```
-
-Add to your Claude / Cursor MCP config:
-
-```json
-{
-  "mcpServers": {
-    "aegis": {
-      "command": "python",
-      "args": ["-m", "aegis.mcp_server"]
-    }
-  }
-}
-```
-
-Available MCP tools:
-
-| Tool | Description |
-|---|---|
-| `aegis_recon_domain` | Subdomain enum + tech detection |
-| `aegis_vuln_web` | Nuclei web vulnerability scan |
-| `aegis_ai_auto` | Full autonomous pentest |
-| `aegis_get_findings` | Query findings from the database |
-| `aegis_generate_report` | Generate a report |
-| `aegis_scope_add` | Add a target to scope |
-| `aegis_secrets_scan` | Scan for exposed secrets |
-
----
-
-## Reports
-
-```bash
-# Markdown report
-aegis report generate example.com --format md
-
-# HTML report with D3.js attack path graph
-aegis report generate example.com --format html
-
-# PDF report
-aegis report generate example.com --format pdf
-
-# Filter by minimum severity
-aegis report generate example.com --format html --min-severity high
-```
-
-HTML reports include an interactive D3.js force-directed attack path graph — blue nodes for hosts, colored nodes for findings by severity, edges showing relationships.
-
----
-
-## Burp Suite Integration
-
-```bash
-# Import findings from a Burp XML export
-aegis burp import scan.xml
-
-# Preview without importing
-aegis burp import scan.xml --dry-run
-
-# List all Burp-imported findings
-aegis burp list
-```
-
----
-
-## CVE Correlation
-
-```bash
-# Correlate all findings in a session with NVD CVEs
-aegis cve correlate --session 1
-
-# Search NVD directly
-aegis cve search "apache log4j" --max 10
-
-# List CVEs linked to a specific finding
-aegis cve list --finding 42
-```
-
----
-
-## Campaigns
-
-Run parallel scans across multiple targets and track results over time.
-
-```bash
-# Create a campaign
-aegis campaign create q4-audit --domain acme.com
-
-# Run it
-aegis campaign run q4-audit --full
-
-# Run against a list of targets in parallel
-aegis campaign run-parallel q4-audit --targets targets.txt --max-parallel 5
-
-# Compare two runs
-aegis campaign diff q4-audit
-
-# Generate a campaign report
-aegis campaign report q4-audit
-```
-
----
-
-## Notifications
-
-```bash
-# Send a test notification
-aegis notify test --channel slack
-
-# Send findings from a session
-aegis notify send --session 1 --min-severity high --channel discord
-```
-
-Configure webhooks in `config/config.yaml`:
-
-```yaml
-notifications:
-  slack_webhook: "https://hooks.slack.com/services/..."
-  discord_webhook: "https://discord.com/api/webhooks/..."
-```
-
----
-
-## SARIF Export
-
-```bash
-# Export all findings as SARIF v2.1.0
-aegis sarif export
-
-# Export a specific session
-aegis sarif export --session 1 --output results.sarif
-```
-
-Upload to GitHub Code Scanning via the `github/codeql-action/upload-sarif` action for inline PR annotations.
-
----
-
-## Update
-
-```bash
-# Update Aegis + nuclei templates in one command
-aegis self-update
-
-# Preview without making changes
-aegis self-update --dry-run
-
-# Include pre-release builds (when installed via pip)
-aegis self-update --pre
-```
-
-Detects automatically whether you are running from a git clone (`git pull` + `pip install -e .`) or a pip install (`pip install --upgrade aegis-cli`).
-
----
-
-## Uninstall
-
-### Quick uninstall (single command)
-
-```bash
-# Full removal — Aegis, all Go/Cargo/pip tools, wrapper scripts
-aegis uni --yes
-
-# Preview what would be removed (safe, no changes)
-aegis uni --dry-run
-
-# Keep your databases and reports
-aegis uni --yes --keep-data
-
-# Keep both data and config
-aegis uni --yes --keep-data --keep-config
-```
-
-### Granular uninstall
-
-```bash
-aegis uninstall --dry-run                              # preview only
-aegis uninstall --yes                                  # remove Aegis and tools
-aegis uninstall --yes --remove-data                    # also delete databases and reports
-aegis uninstall --yes --remove-data --remove-config    # full clean
-```
-
----
-
-## Development
-
-```bash
-git clone https://github.com/thecnical/aegis-devin.git
-cd aegis
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-
-pytest --tb=short          # run tests
-ruff check .               # lint
-mypy aegis/                # type check
-```
-
----
-
-## Roadmap
-
-**Near-term**
-- Metasploit session management — interact with opened shells from the CLI
-- Cloud asset enumeration expansion — Route53, Azure DNS, GCP DNS zone transfers
-- Passive JS endpoint extraction during recon
-- OOB DNS-only mode (no interactsh dependency)
-
-**Medium-term**
-- Autonomous exploit chaining — AI selects and chains exploits based on confirmed vulns
-- Custom Nuclei template generation — AI writes YAML templates for discovered endpoints
-- Active directory attack path execution — auto-run BloodHound-suggested attack paths
-- Kerberoasting and AS-REP roasting integration
-
-**Research-grade**
-- Protocol-level fuzzing with `boofuzz` and finding correlation
-- WAF/IDS evasion using AI-generated obfuscated payloads
-- CVE-to-PoC auto-mapping — correlate NVD CVEs with ExploitDB and GitHub PoCs
-- LLM-generated custom exploit code for confirmed vulnerabilities
+## Security Considerations
+
+- **Authorization Required:** Always get written permission before scanning targets
+- **Safe Mode:** Enable `safe_mode: true` in config to enforce scope checking
+- **API Security:** CORS restricted to configured origins, rate limiting enabled
+- **Evidence Chain:** Forensic captures use SHA-256 + BLAKE3 integrity verification
+- **No Secrets in Output:** API keys are masked in logs and CLI output
+- **TLS Verification:** Disabled only for target-facing requests (expected for pentest tools), NOT for AI API calls
 
 ---
 
 ## Contributing
 
-Pull requests are welcome. For major changes, open an issue first.
-
-Please ensure `ruff check .` and `mypy aegis/` pass before submitting a PR.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Run tests: `pytest`
+4. Run linter: `ruff check .`
+5. Commit changes (`git commit -m 'Add amazing feature'`)
+6. Push to branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ---
 
-## Support
+## Author
 
-If Aegis saves you time on an engagement or helps you learn offensive security, consider supporting the project.
+**Chandan Pandey**
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/chandanpandit)
+- GitHub: [@thecnical](https://github.com/thecnical)
+- Project: [aegis-devin](https://github.com/thecnical/aegis-devin)
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <b>One command. Every phase. Real AI. Self-Learning.</b><br>
+  <code>aegis ai auto --target YOUR_TARGET --full</code>
+</p>

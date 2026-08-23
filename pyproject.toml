@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aegis-devin"
-version = "2.2.0"
-description = "Aegis-Devin: AI-driven autonomous penetration testing & network forensics platform. Autonomous red team, AI network forensics, CVE exploitation, MITRE ATT&CK mapping — one CLI. 100% free & open source."
+version = "3.0.0"
+description = "Aegis-Devin: AI-driven autonomous penetration testing & network forensics platform. Self-learning scanner, exploit chain analysis, MITRE ATT&CK mapping, adaptive monitoring, anomaly detection, OSINT intelligence — one CLI. 100% free & open source."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -35,6 +35,11 @@ keywords = [
   "pcap", "wireshark", "zeek", "bro", "network-monitor",
   "zero-day", "exploit-framework", "security-automation",
   "groq", "nvidia-nim", "llm7", "free-ai-api",
+  "self-learning", "adaptive-scanning", "exploit-chains", "attack-paths",
+  "anomaly-detection", "beacon-detection", "dns-tunneling", "dga-detection",
+  "certificate-transparency", "wayback-machine", "favicon-hash", "osint-passive",
+  "drift-detection", "continuous-monitoring", "kill-chain", "attack-narrative",
+  "network-anomaly", "arp-spoofing", "port-scan-detection", "exfiltration-detection",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -82,6 +87,11 @@ dev = [
   "types-requests>=2.31",
   "types-PyYAML>=6.0",
 ]
+forensics = [
+  "scapy>=2.5",
+  "dpkt>=1.9",
+  "blake3>=0.4",
+]
 mcp = [
   "mcp>=1.0",
 ]
@@ -103,6 +113,7 @@ packages = [
   "aegis",
   "aegis.api",
   "aegis.core",
+  "aegis.forensics",
   "aegis.tools",
   "aegis.tools.recon",
   "aegis.tools.vuln",

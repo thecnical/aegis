@@ -819,33 +819,72 @@ def notify_send(ctx: AegisContext, session_id: int, min_severity: Optional[str],
 # ─── watch ────────────────────────────────────────────────────────────────────
 
 @cli.command("watch")
-@click.option("--interval", default=3600, type=int, show_default=True)
+@click.option("--interval", default=3600, type=int, show_default=True, help="Base scan interval in seconds.")
+@click.option("--min-interval", default=300, type=int, show_default=True, help="Minimum interval (for volatile targets).")
+@click.option("--max-interval", default=86400, type=int, show_default=True, help="Maximum interval (for stable targets).")
 @click.option("--min-severity", default="medium", show_default=True)
 @click.option("--notify", "notify_channel", default=None, type=click.Choice(["slack", "discord", "both"]))
+@click.option("--max-iterations", default=0, type=int, help="Stop after N iterations (0=infinite).")
 @pass_context
-def watch_cmd(ctx: AegisContext, interval: int, min_severity: str, notify_channel: Optional[str]) -> None:
-    """Continuously monitor in-scope targets."""
+def watch_cmd(
+    ctx: AegisContext,
+    interval: int,
+    min_interval: int,
+    max_interval: int,
+    min_severity: str,
+    notify_channel: Optional[str],
+    max_iterations: int,
+) -> None:
+    """Adaptive continuous monitoring — self-tuning scanner.
+
+    Unlike basic cron-based scanning, this adapts scan frequency based on
+    target volatility. Targets that change frequently get scanned more often;
+    stable targets get exponentially backed off. Integrates with the learning
+    engine for intelligent tool selection and drift detection.
+    """
+    from aegis.core.adaptive_monitor import AdaptiveMonitor
+
     notifier = Notifier(ctx.config) if notify_channel else None
-    dedup = Deduplicator(ctx.db)
-    console.print(f"[accent]Watch mode started. Interval: {interval}s  Min severity: {min_severity}[/accent]")
-    try:
-        while True:
-            targets = [e.target for e in ctx.scope.list_targets()]
-            if not targets:
-                console.print("[warning]No scope targets defined. Add targets with 'aegis scope add'.[/warning]")
-            else:
-                console.print(f"[dim]Scanning {len(targets)} target(s)...[/dim]")
-                # Placeholder: real scan pipeline would be invoked here
-                new_findings: list[dict] = []
-                truly_new = dedup.filter_new(new_findings)
-                if truly_new and notifier:
-                    notifier.send_findings(truly_new, channel=notify_channel or "both", min_severity=min_severity)
-                    console.print(f"[accent]New findings: {len(truly_new)}[/accent]")
-                else:
-                    console.print("[dim]No new findings this iteration.[/dim]")
-            time.sleep(interval)
-    except KeyboardInterrupt:
-        console.print("[primary]Watch mode stopped.[/primary]")
+
+    def notify_delta(delta):
+        if notifier and delta.has_changes:
+            # Build notification message
+            msg = delta.summary_text()
+            try:
+                notifier.send_text(msg, channel=notify_channel or "both")
+            except Exception:
+                pass
+
+    monitor = AdaptiveMonitor(
+        db=ctx.db,
+        config=ctx.config,
+        scope=ctx.scope,
+        base_interval=interval,
+        min_interval=min_interval,
+        max_interval=max_interval,
+        notify_callback=notify_delta if notifier else None,
+    )
+
+    # Load targets from scope
+    monitor.load_scope_targets()
+    status = monitor.get_status()
+
+    if status["total_targets"] == 0:
+        console.print("[warning]No scope targets defined. Add targets with 'aegis scope add'.[/warning]")
+        return
+
+    from rich.panel import Panel
+    console.print(Panel(
+        f"Targets: {status['total_targets']}\n"
+        f"Base interval: {interval}s ({interval//60}m)\n"
+        f"Adaptive range: {min_interval}s - {max_interval}s\n"
+        f"Notifications: {notify_channel or 'disabled'}\n"
+        f"Mode: {'limited' if max_iterations else 'continuous'}",
+        title="[bold]Adaptive Monitor[/bold]",
+        border_style="green",
+    ))
+
+    monitor.run_loop(max_iterations=max_iterations)
 
 
 # ─── timeline & compare ───────────────────────────────────────────────────────
@@ -1293,6 +1332,199 @@ def update_signatures(ctx: AegisContext, nuclei_update: bool, wordlists: bool, u
         emit_json({"updates": results}, ctx.json_output)
         return
     print_update_summary(results)
+
+
+# ─── learn ────────────────────────────────────────────────────────────────────
+
+@cli.group("learn")
+def learn_group() -> None:
+    """Self-learning engine: profiles, drift detection, recommendations."""
+
+
+@learn_group.command("status")
+@click.pass_context
+def learn_status(ctx: click.Context) -> None:
+    """Show learning engine statistics and knowledge base size."""
+    from aegis.core.learning_engine import LearningEngine
+    context = ctx.obj
+    engine = LearningEngine(context.db)
+    stats = engine.get_statistics()
+
+    from rich.panel import Panel
+    kb = stats["knowledge_base"]
+    lines = [
+        f"Target profiles:       {kb['target_profiles']}",
+        f"Tool effectiveness:    {kb['tool_effectiveness_records']}",
+        f"Scan history:          {kb['scan_history_entries']}",
+        f"Drift events:          {kb['drift_events']}",
+        f"Patterns discovered:   {kb['patterns_discovered']}",
+        f"Strategies learned:    {kb['strategies_learned']}",
+    ]
+    console.print(Panel("\n".join(lines), title="[bold]Learning Engine Knowledge Base[/bold]", border_style="green"))
+
+    if stats["top_tools"]:
+        t = Table(title="Top Performing Tools", border_style="dim green")
+        t.add_column("Tool", style="cyan")
+        t.add_column("Avg Score", style="green", justify="right")
+        t.add_column("Total Findings", justify="right")
+        for tool in stats["top_tools"]:
+            t.add_row(tool["name"], f"{tool['avg_score']:.3f}", str(tool["total_findings"]))
+        console.print(t)
+
+
+@learn_group.command("profile")
+@click.argument("target")
+@click.pass_context
+def learn_profile(ctx: click.Context, target: str) -> None:
+    """Show the learned profile for a target."""
+    from aegis.core.learning_engine import LearningEngine
+    context = ctx.obj
+    engine = LearningEngine(context.db)
+    profile = engine.get_target_profile(target)
+
+    if not profile:
+        console.print(f"[yellow]No profile exists for:[/yellow] {target}")
+        console.print("[dim]Run a scan against this target to build a profile.[/dim]")
+        return
+
+    from rich.panel import Panel
+    console.print(Panel(
+        f"Target: {profile.target}\n"
+        f"Scans: {profile.scan_count}  |  "
+        f"First seen: {profile.first_seen[:10]}  |  "
+        f"Last seen: {profile.last_seen[:10]}\n"
+        f"Technologies: {', '.join(profile.technologies) or 'unknown'}\n"
+        f"Services: {len(profile.services)} discovered\n"
+        f"Open ports: {', '.join(str(p) for p in profile.profile_data.get('open_ports', []))}\n"
+        f"Server: {profile.profile_data.get('server_software', 'unknown')}\n"
+        f"Fingerprint: {profile.last_fingerprint[:16]}...",
+        title=f"[bold]Target Profile: {target}[/bold]",
+        border_style="cyan",
+    ))
+
+    # Historical vulns
+    vulns = profile.profile_data.get("historical_vulns", [])
+    if vulns:
+        console.print(f"\n[bold]Historical vulnerabilities ({len(vulns)}):[/bold]")
+        for v in vulns[:15]:
+            console.print(f"  [dim]●[/dim] {v}")
+
+    # Patch history
+    patches = profile.profile_data.get("patch_history", [])
+    if patches:
+        console.print(f"\n[bold green]Patched ({len(patches)}):[/bold green]")
+        for p in patches[:10]:
+            console.print(f"  [green]✓[/green] {p.get('title', '?')} @ {p.get('patched_at', '?')[:10]}")
+
+
+@learn_group.command("recommend")
+@click.argument("target")
+@click.pass_context
+def learn_recommend(ctx: click.Context, target: str) -> None:
+    """Get AI-powered scan recommendations based on learned intelligence."""
+    from aegis.core.learning_engine import LearningEngine
+    context = ctx.obj
+    engine = LearningEngine(context.db)
+    rec = engine.recommend_strategy(target)
+
+    from rich.panel import Panel
+    console.print(Panel(
+        f"Confidence: [bold]{rec['confidence'].upper()}[/bold]\n"
+        f"Recommended tools: {', '.join(rec['recommended_tools'][:8]) or 'default set'}\n"
+        f"Recommended phases: {', '.join(rec['recommended_phases'])}\n"
+        f"Skip tools: {', '.join(rec['skip_tools'][:5]) or 'none'}\n"
+        f"Focus areas: {', '.join(rec['focus_areas'][:5]) or 'none'}",
+        title=f"[bold]Scan Recommendations for {target}[/bold]",
+        border_style="magenta",
+    ))
+
+    if rec["reasoning"]:
+        console.print("\n[bold]Reasoning:[/bold]")
+        for reason in rec["reasoning"]:
+            console.print(f"  [dim]→[/dim] {reason}")
+
+    if rec["similar_targets"]:
+        console.print("\n[bold]Similar targets in knowledge base:[/bold]")
+        for sim in rec["similar_targets"][:3]:
+            console.print(
+                f"  [cyan]{sim['target']}[/cyan] "
+                f"(similarity={sim['similarity_score']:.0%}, "
+                f"shared: {', '.join(sim['shared_technologies'][:3])})"
+            )
+
+    if rec["drift_alerts"]:
+        console.print(f"\n[bold yellow]Unacknowledged changes: {len(rec['drift_alerts'])}[/bold yellow]")
+        for drift in rec["drift_alerts"][:3]:
+            console.print(f"  [yellow]⚠[/yellow] {drift['description']}")
+
+
+@learn_group.command("drift")
+@click.argument("target", required=False, default=None)
+@click.option("--all", "show_all", is_flag=True, help="Show all drift events, not just unacknowledged.")
+@click.pass_context
+def learn_drift(ctx: click.Context, target: Optional[str], show_all: bool) -> None:
+    """Show drift events (changes detected between scans)."""
+    from aegis.core.learning_engine import LearningEngine
+    context = ctx.obj
+    engine = LearningEngine(context.db)
+
+    if show_all and target:
+        events = engine.get_drift_history(target)
+    else:
+        events = engine.get_unacknowledged_drifts(target)
+
+    if not events:
+        console.print("[green]No drift events found.[/green]")
+        return
+
+    t = Table(title="Drift Events", border_style="yellow")
+    t.add_column("Time", style="dim")
+    t.add_column("Type", style="cyan")
+    t.add_column("Description")
+    t.add_column("Severity", justify="center")
+
+    for event in events[:30]:
+        sev = event.get("severity", "info")
+        sev_style = {"critical": "bold red", "high": "red", "medium": "yellow", "low": "dim", "info": "dim"}.get(sev, "white")
+        t.add_row(
+            str(event.get("detected_at", ""))[:16],
+            event.get("drift_type", ""),
+            event.get("description", "")[:60],
+            f"[{sev_style}]{sev}[/{sev_style}]",
+        )
+    console.print(t)
+
+
+@learn_group.command("targets")
+@click.pass_context
+def learn_targets(ctx: click.Context) -> None:
+    """List all known target profiles in the knowledge base."""
+    from aegis.core.learning_engine import LearningEngine
+    context = ctx.obj
+    engine = LearningEngine(context.db)
+    profiles = engine.get_all_profiles()
+
+    if not profiles:
+        console.print("[yellow]No target profiles in knowledge base yet.[/yellow]")
+        console.print("[dim]Run scans to build intelligence.[/dim]")
+        return
+
+    t = Table(title=f"Known Targets ({len(profiles)})", border_style="green")
+    t.add_column("Target", style="cyan")
+    t.add_column("Scans", justify="right")
+    t.add_column("Technologies", style="dim")
+    t.add_column("Ports", style="dim")
+    t.add_column("Last Seen", style="dim")
+
+    for p in profiles:
+        t.add_row(
+            p.target[:40],
+            str(p.scan_count),
+            ", ".join(p.technologies[:3]) + ("..." if len(p.technologies) > 3 else ""),
+            ", ".join(str(port) for port in p.profile_data.get("open_ports", [])[:5]),
+            p.last_seen[:10],
+        )
+    console.print(t)
 
 
 # ─── campaign ─────────────────────────────────────────────────────────────────
@@ -1756,6 +1988,260 @@ def post() -> None:
 @cli.group()
 def report() -> None:
     """Reporting and export tools."""
+
+
+# ─── forensics ────────────────────────────────────────────────────────────────
+
+from aegis.forensics.cli import forensics_group  # noqa: E402
+cli.add_command(forensics_group)
+
+
+# ─── mitre ────────────────────────────────────────────────────────────────────
+
+@cli.group("mitre")
+def mitre_group() -> None:
+    """MITRE ATT&CK mapping and kill chain analysis."""
+
+
+@mitre_group.command("map")
+@click.option("--session", "session_id", default=None, type=int, help="Map findings from a specific session.")
+@click.option("--severity", default=None, help="Filter by severity before mapping.")
+@click.option("--json", "json_out", is_flag=True)
+@click.option("--json-output", default=None)
+@click.pass_context
+def mitre_map(ctx: click.Context, session_id: Optional[int], severity: Optional[str], json_out: bool, json_output: Optional[str]) -> None:
+    """Map all findings to MITRE ATT&CK techniques."""
+    from aegis.core.mitre_attack import MitreAttackMapper
+    context = ctx.obj
+    json_out = json_out or getattr(context, "json_out", False)
+    json_output = json_output or getattr(context, "json_output", None)
+    db = context.db
+
+    if session_id:
+        findings = db.get_session_findings(session_id)
+    else:
+        findings = db.get_all_findings(limit=200)
+
+    if severity:
+        findings = [f for f in findings if f.get("severity", "").lower() == severity.lower()]
+
+    if not findings:
+        console.print("[yellow]No findings to map.[/yellow]")
+        return
+
+    mapper = MitreAttackMapper()
+    mappings = mapper.map_findings(findings)
+    summary = mapper.summary()
+
+    if json_out:
+        result = {
+            "summary": summary,
+            "mappings": [
+                {"finding": m.finding_title, "severity": m.finding_severity,
+                 "techniques": m.techniques[:5], "tactics": m.tactics_covered,
+                 "confidence": m.confidence}
+                for m in mappings if m.techniques
+            ],
+            "coverage": mapper.get_kill_chain_coverage(),
+            "gaps": mapper.get_coverage_gaps(),
+            "top_techniques": mapper.get_technique_frequency(),
+        }
+        emit_json(result, json_output)
+        return
+
+    from rich.panel import Panel
+    console.print(Panel(
+        f"Findings analyzed: {summary['total_findings']}\n"
+        f"Successfully mapped: {summary['mapped_findings']} ({summary['coverage_percentage']}%)\n"
+        f"Unique techniques: {summary['unique_techniques']}\n"
+        f"Tactics covered: {summary['tactics_covered']}/{summary['total_tactics']} "
+        f"({summary['kill_chain_coverage_pct']}%)",
+        title="[bold]MITRE ATT&CK Mapping Summary[/bold]",
+        border_style="magenta",
+    ))
+
+    # Show mapped findings
+    mapped_results = [m for m in mappings if m.techniques]
+    if mapped_results:
+        t = Table(title="Findings → ATT&CK Techniques", border_style="magenta")
+        t.add_column("Finding", style="white", width=35)
+        t.add_column("Sev", style="bold", justify="center", width=6)
+        t.add_column("Technique(s)", style="cyan", width=35)
+        t.add_column("Tactic", style="yellow", width=20)
+        t.add_column("Conf", justify="right", width=5)
+        for m in mapped_results[:30]:
+            techs = ", ".join(f"{tech['technique_id']}" for tech in m.techniques[:2])
+            tactics = ", ".join(m.tactics_covered[:2])
+            sev_style = {"critical": "bold red", "high": "red", "medium": "yellow"}.get(m.finding_severity, "dim")
+            t.add_row(
+                m.finding_title[:35],
+                f"[{sev_style}]{m.finding_severity[:4]}[/{sev_style}]",
+                techs,
+                tactics[:20],
+                f"{m.confidence:.0%}",
+            )
+        console.print(t)
+
+    # Kill chain coverage visualization
+    console.print("\n[bold]Kill Chain Coverage:[/bold]")
+    coverage = mapper.get_kill_chain_coverage()
+    for tactic_id, info in sorted(coverage.items(), key=lambda x: x[1]["order"]):
+        count = info["techniques_observed"]
+        bar = "█" * min(count, 10) + "░" * (10 - min(count, 10))
+        style = "green" if count > 0 else "dim red"
+        console.print(f"  [{style}]{bar}[/{style}] {info['name']:<25} ({count} techniques)")
+
+    # Gaps
+    gaps = mapper.get_coverage_gaps()
+    if gaps:
+        console.print(f"\n[yellow]Kill Chain Gaps ({len(gaps)} tactics with no coverage):[/yellow]")
+        for gap in gaps:
+            console.print(f"  [dim]○[/dim] Phase {gap['phase']}: {gap['tactic_name']}")
+
+
+@mitre_group.command("narrative")
+@click.option("--session", "session_id", default=None, type=int)
+@click.pass_context
+def mitre_narrative(ctx: click.Context, session_id: Optional[int]) -> None:
+    """Generate an attack narrative based on ATT&CK mapping."""
+    from aegis.core.mitre_attack import MitreAttackMapper
+    context = ctx.obj
+    db = context.db
+
+    findings = db.get_session_findings(session_id) if session_id else db.get_all_findings(limit=200)
+    if not findings:
+        console.print("[yellow]No findings to narrate.[/yellow]")
+        return
+
+    mapper = MitreAttackMapper()
+    mapper.map_findings(findings)
+    narrative = mapper.generate_attack_narrative()
+    from rich.markdown import Markdown
+    console.print(Markdown(narrative))
+
+
+@mitre_group.command("techniques")
+@click.option("--tactic", default=None, help="Filter by tactic name (e.g. 'Initial Access').")
+@click.option("--search", default=None, help="Search techniques by keyword.")
+@click.pass_context
+def mitre_techniques(ctx: click.Context, tactic: Optional[str], search: Optional[str]) -> None:
+    """List known ATT&CK techniques in the database."""
+    from aegis.core.mitre_attack import TACTICS, TECHNIQUES
+    results = list(TECHNIQUES.values())
+
+    if tactic:
+        tactic_lower = tactic.lower()
+        matching_ids = [tid for tid, info in TACTICS.items() if tactic_lower in info["name"].lower()]
+        results = [t for t in results if any(tid in t.tactic_ids for tid in matching_ids)]
+
+    if search:
+        search_lower = search.lower()
+        results = [t for t in results if search_lower in t.name.lower() or search_lower in t.description.lower()]
+
+    if not results:
+        console.print("[yellow]No techniques matched your filters.[/yellow]")
+        return
+
+    t = Table(title=f"ATT&CK Techniques ({len(results)})", border_style="dim magenta")
+    t.add_column("ID", style="cyan", width=12)
+    t.add_column("Name", style="white", width=35)
+    t.add_column("Tactics", style="yellow", width=30)
+    for tech in results[:40]:
+        t.add_row(tech.technique_id, tech.name, ", ".join(tech.tactics)[:30])
+    console.print(t)
+
+
+# ─── chains ───────────────────────────────────────────────────────────────────
+
+@cli.group("chains")
+def chains_group() -> None:
+    """Exploit chain analysis — multi-step attack path discovery."""
+
+
+@chains_group.command("analyze")
+@click.option("--session", "session_id", default=None, type=int, help="Analyze findings from a specific session.")
+@click.option("--min-confidence", default=0.4, type=float, show_default=True, help="Minimum chain confidence.")
+@click.option("--json", "json_out", is_flag=True)
+@click.option("--json-output", default=None)
+@click.pass_context
+def chains_analyze(ctx: click.Context, session_id: Optional[int], min_confidence: float, json_out: bool, json_output: Optional[str]) -> None:
+    """Discover exploit chains — how individual vulns combine into full compromise."""
+    from aegis.core.exploit_chains import ExploitChainAnalyzer
+    context = ctx.obj
+    json_out = json_out or getattr(context, "json_out", False)
+    json_output = json_output or getattr(context, "json_output", None)
+    db = context.db
+
+    findings = db.get_session_findings(session_id) if session_id else db.get_all_findings(limit=300)
+    if not findings:
+        console.print("[yellow]No findings to analyze.[/yellow]")
+        return
+
+    analyzer = ExploitChainAnalyzer()
+    analyzer.add_findings(findings)
+    chains = analyzer.analyze()
+
+    # Filter by confidence
+    chains = [c for c in chains if c.confidence >= min_confidence]
+    summary = analyzer.summary()
+
+    if json_out:
+        emit_json({"summary": summary, "chains": [c.to_dict() for c in chains]}, json_output)
+        return
+
+    from rich.panel import Panel
+    console.print(Panel(
+        f"Findings analyzed: {summary['total_findings_analyzed']}\n"
+        f"Classified: {summary['classified_findings']} | Unclassified: {summary['unclassified_findings']}\n"
+        f"Chains discovered: {summary['chains_discovered']}\n"
+        f"  Critical: {summary['critical_chains']} | High: {summary['high_chains']} | Medium: {summary['medium_chains']}\n"
+        f"Vuln types present: {', '.join(summary['vulnerability_types_present'][:8])}",
+        title="[bold]Exploit Chain Analysis[/bold]",
+        border_style="red",
+    ))
+
+    if not chains:
+        console.print("[green]No exploit chains discovered above confidence threshold.[/green]")
+        return
+
+    for i, chain in enumerate(chains, 1):
+        impact_style = {"critical": "bold red", "high": "red", "medium": "yellow"}.get(chain.impact, "white")
+        console.print(f"\n[{impact_style}]━━━ Chain {i}: {chain.name} ━━━[/{impact_style}]")
+        console.print(f"  Impact: [{impact_style}]{chain.impact.upper()}[/{impact_style}] | Confidence: {chain.confidence:.0%}")
+        console.print(f"  [dim]{chain.description}[/dim]")
+        console.print(f"  [bold]Final Impact:[/bold] {chain.final_impact}")
+        console.print("  [bold]Steps:[/bold]")
+        for j, step in enumerate(chain.steps, 1):
+            sev_style = {"critical": "bold red", "high": "red", "medium": "yellow"}.get(step.severity, "dim")
+            console.print(f"    {j}. [{sev_style}][{step.severity.upper()}][/{sev_style}] {step.title}")
+            if step.capability_gained:
+                console.print(f"       [dim]→ Gains: {', '.join(step.capability_gained[:3])}[/dim]")
+        if chain.mitigations:
+            console.print("  [bold green]Mitigations:[/bold green]")
+            for mit in chain.mitigations[:3]:
+                console.print(f"    [green]•[/green] {mit}")
+
+
+@chains_group.command("report")
+@click.option("--session", "session_id", default=None, type=int)
+@click.pass_context
+def chains_report(ctx: click.Context, session_id: Optional[int]) -> None:
+    """Generate a detailed exploit chain report in Markdown."""
+    from aegis.core.exploit_chains import ExploitChainAnalyzer
+    context = ctx.obj
+    db = context.db
+
+    findings = db.get_session_findings(session_id) if session_id else db.get_all_findings(limit=300)
+    if not findings:
+        console.print("[yellow]No findings.[/yellow]")
+        return
+
+    analyzer = ExploitChainAnalyzer()
+    analyzer.add_findings(findings)
+    analyzer.analyze()
+    report = analyzer.generate_report()
+    from rich.markdown import Markdown
+    console.print(Markdown(report))
 
 
 # ─── help ─────────────────────────────────────────────────────────────────────

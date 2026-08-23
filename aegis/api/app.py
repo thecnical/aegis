@@ -4,18 +4,52 @@ from __future__ import annotations
 import asyncio
 import json
 import hashlib
+import time
 import uuid
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
 from aegis.core.config_manager import ConfigManager
 from aegis.core.db_manager import DatabaseManager
 from aegis.core.scope_manager import ScopeManager
+
+
+# ── Rate Limiting Middleware ───────────────────────────────────────────────────
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Simple in-memory rate limiting: max requests per IP per window."""
+
+    def __init__(self, app, max_requests: int = 100, window_seconds: int = 60):
+        super().__init__(app)
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._requests: dict[str, list[float]] = defaultdict(list)
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        # Cleanup old entries
+        self._requests[client_ip] = [
+            t for t in self._requests[client_ip]
+            if now - t < self.window_seconds
+        ]
+        if len(self._requests[client_ip]) >= self.max_requests:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Try again later."},
+                headers={"Retry-After": str(self.window_seconds)},
+            )
+        self._requests[client_ip].append(now)
+        return await call_next(request)
+
 
 # ── App setup ──────────────────────────────────────────────────────────────────
 
@@ -25,13 +59,22 @@ app = FastAPI(
     description="Headless REST API for Aegis penetration testing framework",
 )
 
+# CORS: Configurable origins instead of wildcard.
+# In production, set AEGIS_CORS_ORIGINS env var to comma-separated allowed origins.
+import os
+_cors_origins_env = os.environ.get("AEGIS_CORS_ORIGINS", "")
+_allowed_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] if _cors_origins_env else ["http://localhost:3000", "http://localhost:8080"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
+
+# Rate limiting: 100 requests per minute per IP
+app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
 # ── Shared state ───────────────────────────────────────────────────────────────
 
@@ -125,6 +168,19 @@ class ScanRequest(BaseModel):
     target: str
     phases: list[str] = ["recon", "vuln"]
     profile: str = "default"
+
+    @classmethod
+    def validate_target(cls, v: str) -> str:
+        """Basic input sanitization for target."""
+        v = v.strip()
+        if not v or len(v) > 500:
+            raise ValueError("Target must be 1-500 characters")
+        # Block obvious dangerous inputs
+        dangerous = [";", "&&", "||", "`", "$(", "${", "\n", "\r"]
+        for char in dangerous:
+            if char in v:
+                raise ValueError(f"Invalid character in target: {char!r}")
+        return v
 
 
 class ScanJobOut(BaseModel):
@@ -330,7 +386,7 @@ async def trigger_scan(req: ScanRequest, _: None = AuthDep) -> ScanJobOut:
         "findings_count": None,
         "error": None,
     }
-    asyncio.create_task(_run_scan_job(job_id, req.target, req.phases))
+    asyncio.create_task(_run_scan_job(job_id, req.target, req.phases), name=f"scan-{job_id}")
     return ScanJobOut(**_scan_jobs[job_id])
 
 
@@ -447,6 +503,7 @@ async def add_scope(entry: ScopeEntryIn, _: None = AuthDep) -> ScopeEntryOut:
 
 
 @app.delete("/api/v1/scope/{entry_id}", status_code=204, tags=["scope"])
-async def remove_scope(entry_id: int, _: None = AuthDep) -> None:
+async def remove_scope(entry_id: int, _: None = AuthDep) -> Response:
     db = _get_db()
     db.remove_scope_entry(entry_id)
+    return Response(status_code=204)
