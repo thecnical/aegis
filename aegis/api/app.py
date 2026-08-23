@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import hashlib
+import json
+import os
 import time
 import uuid
 from collections import defaultdict
@@ -61,7 +62,6 @@ app = FastAPI(
 
 # CORS: Configurable origins instead of wildcard.
 # In production, set AEGIS_CORS_ORIGINS env var to comma-separated allowed origins.
-import os
 _cors_origins_env = os.environ.get("AEGIS_CORS_ORIGINS", "")
 _allowed_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] if _cors_origins_env else ["http://localhost:3000", "http://localhost:8080"]
 

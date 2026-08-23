@@ -203,7 +203,7 @@ class AnomalyDetectionEngine:
         self._horizontal_timestamps: Dict[str, float] = {}
 
         # Protocol distribution
-        self._protocol_counter = Counter()
+        self._protocol_counter: Counter = Counter()  # type: ignore[type-arg]
         self._protocol_stats = StreamingStats()
 
         # ARP tracking

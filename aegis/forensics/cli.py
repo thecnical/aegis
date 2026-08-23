@@ -1,7 +1,6 @@
 """Forensics CLI commands — exposed as `aegis forensics <subcommand>`."""
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
 from typing import Optional
@@ -265,7 +264,7 @@ def verify_cmd(ctx: click.Context, chain_file: str) -> None:
 @click.pass_context
 def dns_cmd(ctx: click.Context, pcap_path: str, json_out: bool, json_output: Optional[str]) -> None:
     """DNS-focused analysis: tunneling, DGA, fast-flux detection."""
-    from aegis.forensics.analyzer import DNSAnalyzer, ForensicsAnalyzer
+    from aegis.forensics.analyzer import DNSAnalyzer
     from aegis.forensics.capture import PcapReader
 
     context = ctx.obj
@@ -399,7 +398,7 @@ def credentials_cmd(
     creds = reader.extract_credentials()
 
     if json_out:
-        emit_json(creds, json_output)
+        emit_json({"credentials": creds}, json_output)
         return
 
     if not creds:

@@ -16,13 +16,9 @@ All 100% passive — no direct requests to the target (except optional favicon f
 """
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 import struct
-import time
-from typing import Any, Dict, List, Optional, Set, Tuple
-from urllib.parse import urljoin, urlparse
+from typing import Any, Dict, List, Optional, Set
 
 import click
 import httpx
@@ -290,9 +286,6 @@ def get_dns_history_hackertarget(domain: str, timeout: int = 15) -> List[str]:
 
 def discover_email_pattern(domain: str, timeout: int = 15) -> Dict[str, Any]:
     """Try to discover email pattern for a domain using public sources."""
-    patterns_found: List[str] = []
-    emails_found: List[str] = []
-
     # Check common email verification endpoints that leak info
     common_patterns = [
         f"info@{domain}",
@@ -492,7 +485,6 @@ def cli(
         return
 
     # ── Pretty output ─────────────────────────────────────────────────────────
-    from rich.panel import Panel
 
     # CT results
     ct = results.get("certificate_transparency", {})
@@ -536,7 +528,7 @@ def cli(
     # JS Analysis
     js = results.get("javascript_analysis", {})
     if js:
-        console.print(f"\n[bold cyan]JavaScript Analysis:[/bold cyan]")
+        console.print("\n[bold cyan]JavaScript Analysis:[/bold cyan]")
         for category, items in js.items():
             if items:
                 style = "bold red" if category == "potential_secrets" else "yellow"

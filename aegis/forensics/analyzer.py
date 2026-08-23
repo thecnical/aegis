@@ -12,17 +12,14 @@ Capabilities:
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import math
-import re
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from aegis.core.ui import console
 
 
 # ── Entropy calculation ───────────────────────────────────────────────────────

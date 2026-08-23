@@ -16,12 +16,12 @@ from __future__ import annotations
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set
 
 
 # ── ATT&CK Tactics (Kill Chain Phases) ────────────────────────────────────────
 
-TACTICS = {
+TACTICS: Dict[str, Dict[str, Any]] = {
     "TA0043": {"name": "Reconnaissance", "shortname": "recon", "order": 1},
     "TA0042": {"name": "Resource Development", "shortname": "resource-dev", "order": 2},
     "TA0001": {"name": "Initial Access", "shortname": "initial-access", "order": 3},
@@ -55,7 +55,7 @@ class Technique:
 
     @property
     def tactics(self) -> List[str]:
-        return [TACTICS[tid]["name"] for tid in self.tactic_ids if tid in TACTICS]
+        return [str(TACTICS[tid]["name"]) for tid in self.tactic_ids if tid in TACTICS]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -409,14 +409,16 @@ class MitreAttackMapper:
 
         # Determine primary kill chain phase
         kill_chain_phase = 1
-        tactics_covered = []
-        for tech in technique_details[:3]:  # Top 3 techniques
-            for tactic_id in tech.get("tactic_ids", []):
+        tactics_covered: List[str] = []
+        for tech in technique_details[:3]:  # type: ignore[assignment]
+            for tactic_id in tech.get("tactic_ids", []):  # type: ignore[attr-defined]
                 if tactic_id in TACTICS:
-                    tactics_covered.append(TACTICS[tactic_id]["name"])
-                    kill_chain_phase = max(kill_chain_phase, TACTICS[tactic_id]["order"])
+                    tactics_covered.append(str(TACTICS[tactic_id]["name"]))
+                    kill_chain_phase = max(kill_chain_phase, int(TACTICS[tactic_id]["order"]))
 
-        overall_confidence = max((t["confidence"] for t in technique_details), default=0.0)
+        overall_confidence: float = max(  # type: ignore[type-var]
+            (float(t.get("confidence", 0)) for t in technique_details), default=0.0  # type: ignore[arg-type, attr-defined]
+        )
 
         mapping = TechniqueMapping(
             finding_title=str(finding.get("title", "")),
@@ -437,7 +439,7 @@ class MitreAttackMapper:
     def get_kill_chain_coverage(self) -> Dict[str, Any]:
         """Get a kill chain coverage report showing which tactics are covered."""
         coverage = {}
-        for tactic_id, info in sorted(TACTICS.items(), key=lambda x: x[1]["order"]):
+        for tactic_id, info in sorted(TACTICS.items(), key=lambda x: int(x[1]["order"])):
             techniques_hit = self._coverage.get(tactic_id, set())
             coverage[tactic_id] = {
                 "name": info["name"],
@@ -447,10 +449,10 @@ class MitreAttackMapper:
             }
         return coverage
 
-    def get_coverage_gaps(self) -> List[Dict[str, str]]:
+    def get_coverage_gaps(self) -> List[Dict[str, Any]]:
         """Identify tactics with no observed techniques (kill chain gaps)."""
-        gaps = []
-        for tactic_id, info in sorted(TACTICS.items(), key=lambda x: x[1]["order"]):
+        gaps: List[Dict[str, Any]] = []
+        for tactic_id, info in sorted(TACTICS.items(), key=lambda x: int(x[1]["order"])):
             if tactic_id not in self._coverage or not self._coverage[tactic_id]:
                 gaps.append({
                     "tactic_id": tactic_id,
@@ -495,7 +497,7 @@ class MitreAttackMapper:
             tactic_name = "Unknown"
             for info in TACTICS.values():
                 if info["order"] == phase_num:
-                    tactic_name = info["name"]
+                    tactic_name = str(info["name"])
                     break
 
             narrative_parts.append(f"\n## Phase {phase_num}: {tactic_name}\n")

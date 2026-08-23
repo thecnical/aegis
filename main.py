@@ -5,7 +5,6 @@ import hashlib
 import os
 import secrets
 import socket
-import time
 from pathlib import Path
 from typing import Optional
 
@@ -66,7 +65,6 @@ from aegis.core.workspace_manager import WorkspaceManager  # noqa: E402
 from aegis.core.ai_client import AIClient  # noqa: E402
 from aegis.core.ai_client import MODEL_PREFERENCES  # noqa: E402
 from aegis.core.notifier import Notifier  # noqa: E402
-from aegis.core.deduplicator import Deduplicator  # noqa: E402
 from aegis.core.workflow_engine import WorkflowEngine  # noqa: E402
 
 def _make_abs(path: str, config_path: str) -> Path:
@@ -2131,7 +2129,7 @@ def mitre_techniques(ctx: click.Context, tactic: Optional[str], search: Optional
 
     if tactic:
         tactic_lower = tactic.lower()
-        matching_ids = [tid for tid, info in TACTICS.items() if tactic_lower in info["name"].lower()]
+        matching_ids = [tid for tid, info in TACTICS.items() if tactic_lower in str(info["name"]).lower()]
         results = [t for t in results if any(tid in t.tactic_ids for tid in matching_ids)]
 
     if search:

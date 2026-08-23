@@ -17,14 +17,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import time
-from collections import Counter, defaultdict
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from aegis.core.db_manager import DatabaseManager
-from aegis.core.ui import console
 
 
 # ── Database schema for learning tables ───────────────────────────────────────
@@ -224,8 +220,8 @@ class TargetProfile:
             })
 
         # Detect service changes
-        old_ports = set(self.profile_data.get("open_ports", []))
-        new_ports = set(s.get("port") for s in services if s.get("port"))
+        old_ports: set = set(self.profile_data.get("open_ports", []))
+        new_ports: set = set(s.get("port") for s in services if s.get("port"))
         added_ports = new_ports - old_ports
         removed_ports = old_ports - new_ports
 
